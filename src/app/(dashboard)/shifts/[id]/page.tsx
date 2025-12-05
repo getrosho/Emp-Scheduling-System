@@ -152,7 +152,7 @@ export default function ShiftDetailPage() {
           </Button>
         </Link>
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">
-          {error || "Shift not found"}
+          {error instanceof Error ? error.message : typeof error === "string" ? error : "Shift not found"}
         </div>
       </section>
     );

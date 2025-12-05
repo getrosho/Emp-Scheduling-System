@@ -103,7 +103,7 @@ export default function LocationDetailPage() {
           </Button>
         </Link>
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">
-          {error || "Location not found"}
+          {error instanceof Error ? error.message : typeof error === "string" ? error : "Location not found"}
         </div>
       </section>
     );

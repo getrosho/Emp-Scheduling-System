@@ -21,7 +21,13 @@ export function NotesInput({ register, errors }: NotesInputProps) {
         placeholder="Add notes about this employee..."
       />
       {errors?.notes && (
-        <p className="text-xs text-rose-600">{errors.notes.message}</p>
+        <p className="text-xs text-rose-600">
+          {typeof errors.notes === "object" && "message" in errors.notes
+            ? String(errors.notes.message)
+            : typeof errors.notes === "string"
+              ? errors.notes
+              : "Invalid input"}
+        </p>
       )}
     </div>
   );
