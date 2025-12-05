@@ -10,8 +10,6 @@ import Link from "next/link";
 import { z } from "zod";
 import { editEmployeeFormSchema } from "@/lib/validations/employees";
 
-type EditEmployeeFormData = z.infer<typeof editEmployeeFormSchema>;
-
 const dayOrder: DayOfWeek[] = [
   DayOfWeek.MON,
   DayOfWeek.TUE,
@@ -39,7 +37,7 @@ export default function EditEmployeePage() {
   // For now, managers can see all locations (this should be restricted)
   const allowedLocationIds = isManager ? undefined : undefined;
 
-  const handleSubmit = async (formData: EditEmployeeFormData) => {
+  const handleSubmit = async (formData: z.infer<typeof editEmployeeFormSchema>) => {
     try {
       // Transform availability from form format (start/end) to API format
       // API expects all 7 days with start/end (nullable)

@@ -70,7 +70,7 @@ export function EmployeeEditForm({
     control,
     formState: { errors, isDirty },
     reset,
-  } = useForm<EditEmployeeFormData>({
+  } = useForm<z.infer<typeof editEmployeeFormSchema>>({
     resolver: zodResolver(editEmployeeFormSchema),
     defaultValues: {
       fullName: employee.fullName || "",

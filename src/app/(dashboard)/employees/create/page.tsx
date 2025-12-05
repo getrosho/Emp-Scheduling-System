@@ -10,7 +10,6 @@ import { createEmployeeSchema } from "@/lib/validations/employees";
 import { EmployeeRole, EmployeeStatus, DayOfWeek } from "@/generated/prisma/enums";
 import { z } from "zod";
 
-type CreateEmployeeForm = z.infer<typeof createEmployeeSchema>;
 
 const dayOrder: DayOfWeek[] = [
   DayOfWeek.MON,
@@ -34,9 +33,8 @@ export default function CreateEmployeePage() {
     setValue,
     watch,
     control,
-  } = useForm<CreateEmployeeForm>({
-    // @ts-ignore - zodResolver type mismatch
-    resolver: zodResolver(createEmployeeSchema) as any,
+  } = useForm<z.infer<typeof createEmployeeSchema>>({
+    resolver: zodResolver(createEmployeeSchema),
     defaultValues: {
       fullName: "",
       email: "",
@@ -69,7 +67,7 @@ export default function CreateEmployeePage() {
     }
   };
 
-  const onSubmit = async (data: CreateEmployeeForm) => {
+  const onSubmit = async (data: z.infer<typeof createEmployeeSchema>) => {
     try {
       await createEmployee.mutateAsync({
         fullName: data.fullName,
@@ -108,7 +106,7 @@ export default function CreateEmployeePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         {/* Full Name */}
         <div>
           <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">

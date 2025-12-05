@@ -12,8 +12,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-type AvailabilityFormData = z.infer<typeof availabilityFormSchema>;
-
 const dayOrder: DayOfWeek[] = [
   DayOfWeek.MON,
   DayOfWeek.TUE,
@@ -51,7 +49,7 @@ export default function AvailabilityPage() {
     handleSubmit,
     formState: { isDirty },
     reset,
-  } = useForm<AvailabilityFormData>({
+  } = useForm<z.infer<typeof availabilityFormSchema>>({
     resolver: zodResolver(availabilityFormSchema),
     defaultValues: {
       availability: dayOrder.map((day) => {
@@ -91,7 +89,7 @@ export default function AvailabilityPage() {
     }
   }, [data?.employee?.availability, reset]);
 
-  const onSubmit = async (formData: AvailabilityFormData) => {
+  const onSubmit = async (formData: z.infer<typeof availabilityFormSchema>) => {
     setIsSubmitting(true);
     try {
       // Transform availability to API format (all 7 days)

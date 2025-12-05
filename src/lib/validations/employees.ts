@@ -148,9 +148,14 @@ export const availabilitySlotSchema = z.object({
   timezone: z.string().default("UTC"),
 });
 
-// Weekly Hour Limit Schema
+// Weekly Hour Limit Schema (for API)
 export const weeklyHourLimitSchema = z.object({
   hours: z.number().int().positive().max(168, "Maximum 168 hours per week"), // Max 7 days
+});
+
+// Weekly Limit Form Schema (for UI form - matches editEmployeeFormSchema structure)
+export const weeklyLimitFormSchema = z.object({
+  weeklyLimitHours: z.number().int().min(0).max(168).optional(), // Max 168 hours (7 days)
 });
 
 // Delete Employee Schema (soft delete confirmation)
