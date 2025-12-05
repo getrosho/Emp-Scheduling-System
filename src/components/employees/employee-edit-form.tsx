@@ -52,8 +52,8 @@ export function EmployeeEditForm({
   const canEditLocations = isAdmin || isManager;
 
   // Map availability from API format to form format
-  const availabilityMap = new Map<number, typeof employee.availability[0]>();
-  const availabilityByDayString = new Map<string, typeof employee.availability[0]>();
+  const availabilityMap = new Map<number, NonNullable<typeof employee.availability>[number]>();
+  const availabilityByDayString = new Map<string, NonNullable<typeof employee.availability>[number]>();
   
   (employee.availability || []).forEach((av: any) => {
     if (av.dayOfWeek !== undefined && av.dayOfWeek !== null) {
