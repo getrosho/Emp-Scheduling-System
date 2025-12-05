@@ -42,8 +42,8 @@ export function useEmployees(filters?: EmployeeFilters) {
       if (filters?.role) {
         const roleValue = filters.role;
         // Check if role is a valid EmployeeRole (not "ALL" or empty string)
-        // Type guard: check if it's a valid EmployeeRole enum value
-        if (roleValue !== "ALL" && roleValue !== "" && (roleValue === "ADMIN" || roleValue === "MANAGER" || roleValue === "EMPLOYEE")) {
+        // Use explicit type narrowing to avoid TypeScript comparison errors
+        if (roleValue === "ADMIN" || roleValue === "MANAGER" || roleValue === "EMPLOYEE") {
           params.append("role", roleValue);
         }
       }
