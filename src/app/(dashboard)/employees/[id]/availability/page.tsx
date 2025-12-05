@@ -9,7 +9,7 @@ import Link from "next/link";
 import { z } from "zod";
 import { availabilityFormSchema } from "@/lib/validations/employees";
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const dayOrder: DayOfWeek[] = [
@@ -49,7 +49,7 @@ export default function AvailabilityPage() {
     handleSubmit,
     formState: { isDirty },
     reset,
-  } = useForm<z.input<typeof availabilityFormSchema>>({
+  } = useForm<z.infer<typeof availabilityFormSchema>>({
     resolver: zodResolver(availabilityFormSchema),
     defaultValues: {
       availability: dayOrder.map((day) => {
@@ -89,7 +89,7 @@ export default function AvailabilityPage() {
     }
   }, [data?.employee?.availability, reset]);
 
-  const onSubmit = async (formData: z.output<typeof availabilityFormSchema>) => {
+  const onSubmit: SubmitHandler<z.infer<typeof availabilityFormSchema>> = async (formData) => {
     setIsSubmitting(true);
     try {
       // Transform availability to API format (all 7 days)

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { WeeklyLimitInput } from "@/components/employees/weekly-limit-input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { weeklyLimitFormSchema } from "@/lib/validations/employees";
@@ -24,7 +24,7 @@ export default function WeeklyLimitPage() {
     handleSubmit,
     formState: { isDirty },
     reset,
-  } = useForm<z.input<typeof weeklyLimitFormSchema>>({
+  } = useForm<z.infer<typeof weeklyLimitFormSchema>>({
     resolver: zodResolver(weeklyLimitFormSchema),
     defaultValues: {
       weeklyLimitHours: data?.employee?.weeklyLimitHours ?? undefined,
@@ -40,7 +40,7 @@ export default function WeeklyLimitPage() {
     }
   }, [data?.employee?.weeklyLimitHours, reset]);
 
-  const onSubmit = async (formData: z.output<typeof weeklyLimitFormSchema>) => {
+  const onSubmit: SubmitHandler<z.infer<typeof weeklyLimitFormSchema>> = async (formData) => {
     setIsSubmitting(true);
     try {
       await updateEmployee.mutateAsync({

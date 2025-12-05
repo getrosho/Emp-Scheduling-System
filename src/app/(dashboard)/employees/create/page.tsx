@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateEmployee } from "@/hooks/use-employees";
 import { useLocations } from "@/hooks/use-locations";
@@ -33,7 +33,7 @@ export default function CreateEmployeePage() {
     setValue,
     watch,
     control,
-  } = useForm<z.input<typeof createEmployeeSchema>>({
+  } = useForm<z.infer<typeof createEmployeeSchema>>({
     resolver: zodResolver(createEmployeeSchema),
     defaultValues: {
       fullName: "",
@@ -67,7 +67,7 @@ export default function CreateEmployeePage() {
     }
   };
 
-  const onSubmit = async (data: z.output<typeof createEmployeeSchema>) => {
+  const onSubmit: SubmitHandler<z.infer<typeof createEmployeeSchema>> = async (data) => {
     try {
       await createEmployee.mutateAsync({
         fullName: data.fullName,

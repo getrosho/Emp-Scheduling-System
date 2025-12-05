@@ -9,6 +9,7 @@ import { Role, DayOfWeek } from "@/generated/prisma/enums";
 import Link from "next/link";
 import { z } from "zod";
 import { editEmployeeFormSchema } from "@/lib/validations/employees";
+import { SubmitHandler } from "react-hook-form";
 
 const dayOrder: DayOfWeek[] = [
   DayOfWeek.MON,
@@ -37,7 +38,7 @@ export default function EditEmployeePage() {
   // For now, managers can see all locations (this should be restricted)
   const allowedLocationIds = isManager ? undefined : undefined;
 
-  const handleSubmit = async (formData: z.output<typeof editEmployeeFormSchema>) => {
+  const handleSubmit: SubmitHandler<z.infer<typeof editEmployeeFormSchema>> = async (formData) => {
     try {
       // Transform availability from form format (start/end) to API format
       // API expects all 7 days with start/end (nullable)

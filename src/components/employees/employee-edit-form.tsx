@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Control } from "react-hook-form";
+import { useForm, Control, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { editEmployeeFormSchema } from "@/lib/validations/employees";
 import { EmployeeRole, EmployeeStatus, DayOfWeek } from "@/generated/prisma/enums";
@@ -15,13 +15,11 @@ import { NotesInput } from "./notes-input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
 
-type EditEmployeeFormData = z.infer<typeof editEmployeeFormSchema>;
-
 type EmployeeEditFormProps = {
   employee: any;
   userRole: Role;
   allowedLocationIds?: string[]; // For managers
-  onSubmit: (data: EditEmployeeFormData) => Promise<void>;
+  onSubmit: SubmitHandler<z.infer<typeof editEmployeeFormSchema>>;
   isSubmitting: boolean;
   errors?: any;
 };
@@ -70,7 +68,7 @@ export function EmployeeEditForm({
     control,
     formState: { errors, isDirty },
     reset,
-  } = useForm<z.input<typeof editEmployeeFormSchema>>({
+  } = useForm<z.infer<typeof editEmployeeFormSchema>>({
     resolver: zodResolver(editEmployeeFormSchema),
     defaultValues: {
       fullName: employee.fullName || "",
@@ -80,7 +78,7 @@ export function EmployeeEditForm({
       notes: employee.notes || "",
       role: employee.role || EmployeeRole.EMPLOYEE,
       preferredLocationIds: employee.preferredLocations?.map((loc: any) => loc.id) || [],
-      weeklyLimitHours: employee.weeklyLimitHours,
+      weeklyLimitHours: employee.weeklyLimitHours ?? undefined,
       subcontractor: employee.subcontractor || false,
       availability: dayOrder.map((day, index) => {
         const dayOfWeekIndex = index === 6 ? 0 : index + 1; // Sunday is 0, Monday is 1

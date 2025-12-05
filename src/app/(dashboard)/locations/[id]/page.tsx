@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Role } from "@/generated/prisma/enums";
 import { TargetIcon, Pencil1Icon, TrashIcon, ArrowLeftIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateLocationSchema } from "@/lib/validations";
 import { z } from "zod";
@@ -31,7 +31,7 @@ export default function LocationDetailPage() {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-  } = useForm<z.input<typeof updateLocationSchema>>({
+  } = useForm<z.infer<typeof updateLocationSchema>>({
     resolver: zodResolver(updateLocationSchema),
     defaultValues: {
       label: data?.location?.label,
@@ -57,7 +57,7 @@ export default function LocationDetailPage() {
     }
   }, [data?.location, isEditing, reset]);
 
-  const onSubmit = async (formData: z.output<typeof updateLocationSchema>) => {
+  const onSubmit: SubmitHandler<z.infer<typeof updateLocationSchema>> = async (formData) => {
     if (!isAdmin) return;
     
     try {
