@@ -1,0 +1,265 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  SUBCONTRACTOR
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EmployeeRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum ShiftStatus {
+  DRAFT
+  PUBLISHED
+  CONFIRMED
+  NEED_REALLOCATION
+}
+
+enum RecurringRule {
+  NONE
+  DAILY
+  EVERY_TWO_DAYS
+  WEEKLY
+  CUSTOM
+}
+
+enum NotificationType {
+  SHIFT_ASSIGNED
+  SHIFT_UPDATED
+  SHIFT_CANCELLED
+  AVAILABILITY_REMINDER
+  GENERAL
+}
+
+enum AssignmentStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+enum DayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+model User {
+  id                String                    @id @default(cuid())
+  email             String                    @unique
+  passwordHash      String
+  name              String
+  phone             String?
+  role              Role
+  skills            String[]                  @default([])
+  profileImage      String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  availability      Availability[]
+  shiftsCreated     Shift[]                   @relation("ShiftCreator")
+  shiftAssignments  ShiftAssignment[]
+  subcontractorJobs SubcontractorAssignment[]
+  notifications     Notification[]            @relation("UserNotifications")
+  weeklyLimits      WeeklyHourLimits?
+  auditLogs         AuditLog[]                @relation("AuditActor")
+}
+
+model Availability {
+  id         String    @id @default(cuid())
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?
+  day        DayOfWeek
+  startTime  String?
+  endTime    String?
+  timezone   String    @default("UTC")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String?
+  dayOfWeek  Int?
+
+  @@index([userId, day])
+  @@index([employeeId, dayOfWeek])
+}
+
+model WorkLocation {
+  id                 String     @id @default(cuid())
+  label              String
+  name               String?
+  address            String?
+  city               String?
+  state              String?
+  postalCode         String?
+  notes              String?
+  shifts             Shift[]
+  employeesPreferred Employee[] @relation("EmployeePreferredLocations")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
+model Shift {
+  id                   String                    @id @default(cuid())
+  title                String
+  description          String?
+  startTime            DateTime
+  endTime              DateTime
+  date                 DateTime
+  durationMinutes      Int                       @default(0)
+  locationLabel        String?
+  skillsRequired       String[]                  @default([])
+  createdByUser        User                      @relation("ShiftCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdBy            String
+  status               ShiftStatus               @default(DRAFT)
+  colorTag             String?                   @default("#2563eb")
+  isRecurring          Boolean                   @default(false)
+  recurringRule        RecurringRule             @default(NONE)
+  recurringTemplate    RecurringShiftTemplate?   @relation(fields: [recurringTemplateId], references: [id], onDelete: SetNull)
+  recurringTemplateId  String?
+  location             WorkLocation?             @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId           String?
+  assignedEmployees    String[]                  @default([])
+  shiftAssignments     ShiftAssignment[]
+  subcontractorDemands SubcontractorAssignment[]
+  notifications        Notification[]            @relation("ShiftNotifications")
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+model RecurringShiftTemplate {
+  id            String        @id @default(cuid())
+  name          String
+  description   String?
+  rule          RecurringRule
+  interval      Int           @default(1) // e.g., every week, every 2 weeks
+  byWeekday     DayOfWeek[]   @default([])
+  startDate     DateTime
+  endDate       DateTime?
+  shiftDuration Int // minutes
+  baseStartTime String
+  baseEndTime   String
+  timezone      String        @default("UTC")
+  shifts        Shift[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ShiftAssignment {
+  id         String           @id @default(cuid())
+  shift      Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  shiftId    String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  status     AssignmentStatus @default(PENDING)
+  acceptedAt DateTime?
+  declinedAt DateTime?
+  note       String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([shiftId, userId])
+  @@index([shiftId])
+  @@index([userId])
+}
+
+model SubcontractorAssignment {
+  id              String           @id @default(cuid())
+  shift           Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  shiftId         String
+  subcontractor   User             @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  subcontractorId String
+  slotsRequested  Int              @default(1)
+  slotsFilled     Int              @default(0)
+  slotDetails     Json?
+  status          AssignmentStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([shiftId])
+  @@index([subcontractorId])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType @default(GENERAL)
+  message     String
+  metadata    Json?
+  recipient   User             @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  shift       Shift?           @relation("ShiftNotifications", fields: [shiftId], references: [id], onDelete: SetNull)
+  shiftId     String?
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  @@index([recipientId, read])
+}
+
+model WeeklyHourLimits {
+  id               String    @id @default(cuid())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String    @unique
+  weeklyCapMinutes Int       @default(2400) // 40h
+  effectiveFrom    DateTime  @default(now())
+  effectiveTo      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+}
+
+model Employee {
+  id                 String         @id @default(cuid())
+  fullName           String
+  email              String         @unique
+  phone              String?
+  role               EmployeeRole   @default(EMPLOYEE)
+  status             EmployeeStatus @default(ACTIVE)
+  subcontractor      Boolean        @default(false)
+  preferredLocations WorkLocation[] @relation("EmployeePreferredLocations")
+  availability       Availability[]
+  weeklyLimitHours   Int?
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
