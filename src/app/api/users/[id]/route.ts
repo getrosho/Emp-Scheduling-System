@@ -6,13 +6,14 @@ import { Role } from "@/generated/prisma/enums";
 import { AppError } from "@/utils/errors";
 import { handleRouteError, jsonResponse } from "@/utils/response";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     await requireAuth(req);
+    const { id } = await params;
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { weeklyLimits: true, availability: true },
     });
 
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const actor = await requireAuth(req, [Role.ADMIN, Role.MANAGER]);
+    const { id } = await params;
     const body = await req.json();
     const payload = updateUserSchema.parse(body);
 
@@ -58,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const updated = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data,
       include: { weeklyLimits: true },
     });
@@ -72,9 +74,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
     await requireAuth(req, [Role.ADMIN]);
+    const { id } = await params;
 
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return jsonResponse({ deleted: true });
