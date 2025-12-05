@@ -26,9 +26,10 @@ const dayOrder: DayOfWeek[] = [
 type AvailabilityEditorProps = {
   control: Control<any>;
   errors?: any;
+  disabled?: boolean;
 };
 
-export function AvailabilityEditor({ control, errors }: AvailabilityEditorProps) {
+export function AvailabilityEditor({ control, errors, disabled = false }: AvailabilityEditorProps) {
   const availability = useWatch({ control, name: "availability" });
 
   return (
@@ -52,7 +53,8 @@ export function AvailabilityEditor({ control, errors }: AvailabilityEditorProps)
                       type="time"
                       value={field.value || ""}
                       onChange={(e) => field.onChange(e.target.value || null)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      disabled={disabled}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
                       placeholder="HH:mm"
                     />
                   </div>
@@ -68,7 +70,8 @@ export function AvailabilityEditor({ control, errors }: AvailabilityEditorProps)
                       type="time"
                       value={field.value || ""}
                       onChange={(e) => field.onChange(e.target.value || null)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      disabled={disabled}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
                       placeholder="HH:mm"
                     />
                   </div>
