@@ -49,7 +49,7 @@ export default function AvailabilityPage() {
     handleSubmit,
     formState: { isDirty },
     reset,
-  } = useForm<z.infer<typeof availabilityFormSchema>>({
+  } = useForm<z.input<typeof availabilityFormSchema>>({
     resolver: zodResolver(availabilityFormSchema),
     defaultValues: {
       availability: dayOrder.map((day) => {
@@ -89,7 +89,7 @@ export default function AvailabilityPage() {
     }
   }, [data?.employee?.availability, reset]);
 
-  const onSubmit = async (formData: z.infer<typeof availabilityFormSchema>) => {
+  const onSubmit = async (formData: z.output<typeof availabilityFormSchema>) => {
     setIsSubmitting(true);
     try {
       // Transform availability to API format (all 7 days)

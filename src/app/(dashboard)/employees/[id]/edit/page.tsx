@@ -37,7 +37,7 @@ export default function EditEmployeePage() {
   // For now, managers can see all locations (this should be restricted)
   const allowedLocationIds = isManager ? undefined : undefined;
 
-  const handleSubmit = async (formData: z.infer<typeof editEmployeeFormSchema>) => {
+  const handleSubmit = async (formData: z.output<typeof editEmployeeFormSchema>) => {
     try {
       // Transform availability from form format (start/end) to API format
       // API expects all 7 days with start/end (nullable)

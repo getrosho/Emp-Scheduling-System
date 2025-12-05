@@ -33,7 +33,7 @@ export default function CreateEmployeePage() {
     setValue,
     watch,
     control,
-  } = useForm<z.infer<typeof createEmployeeSchema>>({
+  } = useForm<z.input<typeof createEmployeeSchema>>({
     resolver: zodResolver(createEmployeeSchema),
     defaultValues: {
       fullName: "",
@@ -67,7 +67,7 @@ export default function CreateEmployeePage() {
     }
   };
 
-  const onSubmit = async (data: z.infer<typeof createEmployeeSchema>) => {
+  const onSubmit = async (data: z.output<typeof createEmployeeSchema>) => {
     try {
       await createEmployee.mutateAsync({
         fullName: data.fullName,

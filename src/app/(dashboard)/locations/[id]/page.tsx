@@ -13,8 +13,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { updateLocationSchema } from "@/lib/validations";
 import { z } from "zod";
 
-type UpdateLocationFormData = z.infer<typeof updateLocationSchema>;
-
 export default function LocationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -33,15 +31,15 @@ export default function LocationDetailPage() {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-  } = useForm<UpdateLocationFormData>({
+  } = useForm<z.input<typeof updateLocationSchema>>({
     resolver: zodResolver(updateLocationSchema),
     defaultValues: {
-      label: data?.location?.label || "",
-      address: data?.location?.address || "",
-      city: data?.location?.city || "",
-      state: data?.location?.state || "",
-      postalCode: data?.location?.postalCode || "",
-      notes: data?.location?.notes || "",
+      label: data?.location?.label,
+      address: data?.location?.address,
+      city: data?.location?.city,
+      state: data?.location?.state,
+      postalCode: data?.location?.postalCode,
+      notes: data?.location?.notes,
     },
   });
 
@@ -49,17 +47,17 @@ export default function LocationDetailPage() {
   useEffect(() => {
     if (data?.location && !isEditing) {
       reset({
-        label: data.location.label || "",
-        address: data.location.address || "",
-        city: data.location.city || "",
-        state: data.location.state || "",
-        postalCode: data.location.postalCode || "",
-        notes: data.location.notes || "",
+        label: data.location.label,
+        address: data.location.address,
+        city: data.location.city,
+        state: data.location.state,
+        postalCode: data.location.postalCode,
+        notes: data.location.notes,
       });
     }
   }, [data?.location, isEditing, reset]);
 
-  const onSubmit = async (formData: UpdateLocationFormData) => {
+  const onSubmit = async (formData: z.output<typeof updateLocationSchema>) => {
     if (!isAdmin) return;
     
     try {
