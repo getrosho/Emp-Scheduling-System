@@ -75,9 +75,9 @@ export async function GET(req: NextRequest) {
       const parseResult = employeeFilterSchema.safeParse(filterParams);
       
       if (!parseResult.success) {
-        console.error("[Employees GET] Validation errors:", JSON.stringify(parseResult.error.errors, null, 2));
+        console.error("[Employees GET] Validation errors:", JSON.stringify(parseResult.error.issues, null, 2));
         throw new AppError(
-          `Invalid filter parameters: ${parseResult.error.errors.map(e => `${e.path.join(".")}: ${e.message}`).join(", ")}`,
+          `Invalid filter parameters: ${parseResult.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ")}`,
           400
         );
       }

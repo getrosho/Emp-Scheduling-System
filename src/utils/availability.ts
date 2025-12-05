@@ -15,10 +15,11 @@ export function availabilityOverlaps(
   const endMinutes = toMinutes(end);
 
   return existing
-    .filter((slot) => slot.day === day)
+    .filter((slot) => slot.day === day && slot.startTime !== null && slot.endTime !== null)
     .some((slot) => {
-      const slotStart = toMinutes(slot.startTime);
-      const slotEnd = toMinutes(slot.endTime);
+      // TypeScript now knows startTime and endTime are not null due to filter
+      const slotStart = toMinutes(slot.startTime!);
+      const slotEnd = toMinutes(slot.endTime!);
       return Math.max(slotStart, startMinutes) < Math.min(slotEnd, endMinutes);
     });
 }

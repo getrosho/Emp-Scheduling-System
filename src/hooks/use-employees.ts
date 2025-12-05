@@ -39,11 +39,14 @@ export function useEmployees(filters?: EmployeeFilters) {
       const params = new URLSearchParams();
       
       // Only send role if it's a valid single role (not "ALL" or empty)
-      if (filters?.role && filters.role !== "" && filters.role !== "ALL") {
-        params.append("role", filters.role);
+      if (filters?.role) {
+        // Check if role is a valid EmployeeRole (not "ALL" or empty string)
+        if (filters.role !== "ALL" && filters.role !== "") {
+          params.append("role", filters.role);
+        }
       }
       
-      if (filters?.status && filters.status !== "") {
+      if (filters?.status) {
         params.append("status", filters.status);
       }
       

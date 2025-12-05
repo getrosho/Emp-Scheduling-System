@@ -115,7 +115,11 @@ export async function POST(req: NextRequest) {
       let coverage = false;
       if (availability.length > 0) {
         // Check availability for each slot, converting shift times to the slot's timezone
-        coverage = availability.some((slot: { day: DayOfWeek; startTime: string; endTime: string; timezone: string | null }) => {
+        coverage = availability.some((slot) => {
+          // Type guard: ensure required fields are present
+          if (!slot.startTime || !slot.endTime) {
+            return false;
+          }
           try {
             const slotTimezone = slot.timezone || "UTC";
             
@@ -127,6 +131,10 @@ export async function POST(req: NextRequest) {
             if (slot.day !== shiftStartInTz.day) {
               return false;
             }
+            
+            // Now we know startTime and endTime are strings (not null)
+            const slotStartTime = slot.startTime;
+            const slotEndTime = slot.endTime;
 
             // Convert availability times to minutes
             const availabilityStart = timeStringToMinutes(slot.startTime);

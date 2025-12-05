@@ -84,7 +84,9 @@ async function request<T>(method: HttpMethod, url: string, data?: unknown, confi
           throw errorObj;
         }
         if (apiResponse.success === false) {
-          throw { message: apiResponse.error?.message || "Unknown API error" };
+          // When success is false, error should exist, but TypeScript doesn't know this
+          const errorMessage = (apiResponse as { error?: { message?: string } }).error?.message || "Unknown API error";
+          throw { message: errorMessage };
         }
       }
       

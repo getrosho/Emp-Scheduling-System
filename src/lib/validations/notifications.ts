@@ -5,7 +5,7 @@ export const createNotificationSchema = z.object({
   recipientId: z.string().cuid(),
   message: z.string().min(2),
   type: z.nativeEnum(NotificationType).default(NotificationType.GENERAL),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   shiftId: z.string().cuid().optional(),
 });
 
