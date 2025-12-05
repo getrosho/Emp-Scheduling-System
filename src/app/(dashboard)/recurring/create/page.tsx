@@ -5,16 +5,29 @@ import { useRouter } from "next/navigation";
 import { useCreateRecurringTemplate } from "@/hooks/use-recurring";
 import { Button } from "@/components/ui/button";
 import { RecurringRule, DayOfWeek } from "@/generated/prisma/enums";
+import { toRecurringRule, enumToString } from "@/lib/form-utils";
 
 export default function CreateRecurringTemplatePage() {
   const router = useRouter();
   const createTemplate = useCreateRecurringTemplate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    rule: RecurringRule;
+    interval: number;
+    byWeekday: DayOfWeek[];
+    startDate: string;
+    endDate: string;
+    shiftDuration: number;
+    baseStartTime: string;
+    baseEndTime: string;
+    timezone: string;
+  }>({
     name: "",
     description: "",
     rule: RecurringRule.WEEKLY,
     interval: 1,
-    byWeekday: [] as DayOfWeek[],
+    byWeekday: [],
     startDate: new Date().toISOString().split("T")[0],
     endDate: "",
     shiftDuration: 480, // 8 hours in minutes
@@ -118,8 +131,8 @@ export default function CreateRecurringTemplatePage() {
             <select
               id="rule"
               required
-              value={formData.rule}
-              onChange={(e) => setFormData({ ...formData, rule: e.target.value as RecurringRule })}
+              value={enumToString(formData.rule)}
+              onChange={(e) => setFormData({ ...formData, rule: toRecurringRule(e.target.value, RecurringRule.WEEKLY) })}
               className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value={RecurringRule.DAILY}>Daily</option>

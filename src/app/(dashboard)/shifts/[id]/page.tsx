@@ -11,6 +11,7 @@ import { Role, ShiftStatus } from "@/generated/prisma/enums";
 import { CalendarIcon, Pencil1Icon, TrashIcon, ArrowLeftIcon, ClockIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { format } from "date-fns";
+import { toShiftStatus, enumToString } from "@/lib/form-utils";
 
 export default function ShiftDetailPage() {
   const params = useParams();
@@ -28,15 +29,26 @@ export default function ShiftDetailPage() {
   const isAdmin = user?.role === Role.ADMIN;
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    locationId: string;
+    skillsRequired: string[];
+    assignedEmployeeIds: string[];
+    colorTag: string;
+    status: ShiftStatus;
+  }>({
     title: "",
     description: "",
     date: "",
     startTime: "",
     endTime: "",
     locationId: "",
-    skillsRequired: [] as string[],
-    assignedEmployeeIds: [] as string[],
+    skillsRequired: [],
+    assignedEmployeeIds: [],
     colorTag: "#2563eb",
     status: ShiftStatus.DRAFT,
   });
@@ -59,7 +71,7 @@ export default function ShiftDetailPage() {
         skillsRequired: shift.skillsRequired || [],
         assignedEmployeeIds: shift.assignedEmployees || [],
         colorTag: shift.colorTag || "#2563eb",
-        status: (shift.status as ShiftStatus) || ShiftStatus.DRAFT,
+        status: shift.status ? toShiftStatus(shift.status, ShiftStatus.DRAFT) : ShiftStatus.DRAFT,
       });
     }
   }, [data?.shift, isEditing]);
@@ -329,8 +341,8 @@ export default function ShiftDetailPage() {
                   </label>
                   <select
                     id="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as ShiftStatus })}
+                    value={enumToString(formData.status)}
+                    onChange={(e) => setFormData({ ...formData, status: toShiftStatus(e.target.value, ShiftStatus.DRAFT) })}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   >
                     <option value={ShiftStatus.DRAFT}>Draft</option>

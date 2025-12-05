@@ -8,6 +8,7 @@ import { useEmployees } from "@/hooks/use-employees";
 import { Button } from "@/components/ui/button";
 import { RecurringRule } from "@/generated/prisma/enums";
 import type { Employee } from "@/types/employees";
+import { toRecurringRule, enumToString } from "@/lib/form-utils";
 
 export default function CreateShiftPage() {
   const router = useRouter();
@@ -373,9 +374,9 @@ export default function CreateShiftPage() {
               </label>
               <select
                 id="recurringRule"
-                value={formData.recurringRule}
+                value={enumToString(formData.recurringRule)}
                 onChange={(e) => {
-                  const value = e.target.value as RecurringRule;
+                  const value = toRecurringRule(e.target.value, RecurringRule.NONE);
                   setFormData({ ...formData, recurringRule: value });
                 }}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
