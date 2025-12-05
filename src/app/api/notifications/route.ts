@@ -29,16 +29,28 @@ export async function POST(req: NextRequest) {
     const payload = createNotificationSchema.parse(await req.json());
 
     // Convert metadata to Prisma-compatible JSON format
-    // Prisma expects InputJsonValue for JSON fields, which accepts Record<string, unknown>
-    const notificationData = {
+    // Prisma expects InputJsonValue for JSON fields
+    const notificationData: {
+      recipientId: string;
+      message: string;
+      type: string;
+      shiftId?: string;
+      metadata?: unknown;
+    } = {
       recipientId: payload.recipientId,
       message: payload.message,
       type: payload.type,
-      ...(payload.shiftId && { shiftId: payload.shiftId }),
-      ...(payload.metadata && { metadata: payload.metadata as unknown }),
     };
+    
+    if (payload.shiftId) {
+      notificationData.shiftId = payload.shiftId;
+    }
+    
+    if (payload.metadata) {
+      notificationData.metadata = payload.metadata;
+    }
 
-    const notification = await prisma.notification.create({ data: notificationData });
+    const notification = await prisma.notification.create({ data: notificationData as any });
     return jsonResponse({ notification }, { status: 201 });
   } catch (error) {
     return handleRouteError(error);

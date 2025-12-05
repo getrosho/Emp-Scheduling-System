@@ -40,9 +40,12 @@ export function useEmployees(filters?: EmployeeFilters) {
       
       // Only send role if it's a valid single role (not "ALL" or empty)
       if (filters?.role) {
+        const roleValue = filters.role;
         // Check if role is a valid EmployeeRole (not "ALL" or empty string)
-        if (filters.role !== "ALL" && filters.role !== "") {
-          params.append("role", filters.role);
+        // Check for empty string first (before type narrowing removes it)
+        if (roleValue !== "" && roleValue !== "ALL") {
+          // Now TypeScript knows roleValue is EmployeeRole
+          params.append("role", roleValue);
         }
       }
       
