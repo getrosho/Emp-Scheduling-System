@@ -223,17 +223,23 @@ export default function ShiftDetailPage() {
 
       {updateShift.isError && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">
-          {updateShift.error && typeof updateShift.error === "object" && "message" in updateShift.error
-            ? (updateShift.error as any).message
-            : "Failed to update shift. Please try again."}
+          <p className="font-medium">Error</p>
+          <p className="text-sm">
+            {updateShift.error && typeof updateShift.error === "object" && "message" in updateShift.error
+              ? String((updateShift.error as { message: unknown }).message)
+              : "Failed to update shift. Please try again."}
+          </p>
         </div>
       )}
 
       {deleteShift.isError && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">
-          {deleteShift.error && typeof deleteShift.error === "object" && "message" in deleteShift.error
-            ? (deleteShift.error as any).message
-            : "Failed to delete shift. Please try again."}
+          <p className="font-medium">Error</p>
+          <p className="text-sm">
+            {deleteShift.error && typeof deleteShift.error === "object" && "message" in deleteShift.error
+              ? String((deleteShift.error as { message: unknown }).message)
+              : "Failed to delete shift. Please try again."}
+          </p>
         </div>
       )}
 

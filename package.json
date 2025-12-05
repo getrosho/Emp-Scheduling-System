@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
     "build": "npm run prisma:generate && next build",
     "start": "next start",
     "lint": "eslint",
