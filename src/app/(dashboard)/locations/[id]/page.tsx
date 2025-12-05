@@ -31,7 +31,7 @@ export default function LocationDetailPage() {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-  } = useForm<z.infer<typeof updateLocationSchema>>({
+  } = useForm<z.input<typeof updateLocationSchema>>({
     resolver: zodResolver(updateLocationSchema),
     defaultValues: {
       label: data?.location?.label,
@@ -57,7 +57,7 @@ export default function LocationDetailPage() {
     }
   }, [data?.location, isEditing, reset]);
 
-  const onSubmit: SubmitHandler<z.infer<typeof updateLocationSchema>> = async (formData) => {
+  const onSubmit: SubmitHandler<z.input<typeof updateLocationSchema>> = async (formData) => {
     if (!isAdmin) return;
     
     try {

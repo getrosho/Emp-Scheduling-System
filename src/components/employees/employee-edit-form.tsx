@@ -19,7 +19,7 @@ type EmployeeEditFormProps = {
   employee: any;
   userRole: Role;
   allowedLocationIds?: string[]; // For managers
-  onSubmit: SubmitHandler<z.infer<typeof editEmployeeFormSchema>>;
+  onSubmit: SubmitHandler<z.input<typeof editEmployeeFormSchema>>;
   isSubmitting: boolean;
   errors?: any;
 };
@@ -68,7 +68,7 @@ export function EmployeeEditForm({
     control,
     formState: { errors, isDirty },
     reset,
-  } = useForm<z.infer<typeof editEmployeeFormSchema>>({
+  } = useForm<z.input<typeof editEmployeeFormSchema>>({
     resolver: zodResolver(editEmployeeFormSchema),
     defaultValues: {
       fullName: employee.fullName || "",

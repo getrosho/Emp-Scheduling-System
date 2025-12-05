@@ -24,7 +24,7 @@ export default function WeeklyLimitPage() {
     handleSubmit,
     formState: { isDirty },
     reset,
-  } = useForm<z.infer<typeof weeklyLimitFormSchema>>({
+  } = useForm<z.input<typeof weeklyLimitFormSchema>>({
     resolver: zodResolver(weeklyLimitFormSchema),
     defaultValues: {
       weeklyLimitHours: data?.employee?.weeklyLimitHours ?? undefined,
@@ -40,7 +40,7 @@ export default function WeeklyLimitPage() {
     }
   }, [data?.employee?.weeklyLimitHours, reset]);
 
-  const onSubmit: SubmitHandler<z.infer<typeof weeklyLimitFormSchema>> = async (formData) => {
+  const onSubmit: SubmitHandler<z.input<typeof weeklyLimitFormSchema>> = async (formData) => {
     setIsSubmitting(true);
     try {
       await updateEmployee.mutateAsync({
