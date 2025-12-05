@@ -86,7 +86,7 @@ export default function EmployeeDetailPage() {
   const employee = data.employee;
 
   // Map availability by day
-  const availabilityMap = new Map<string, typeof employee.availability[0]>();
+  const availabilityMap = new Map<string, NonNullable<typeof employee.availability>[number]>();
   (employee.availability || []).forEach((av) => {
     if (av.day) {
       availabilityMap.set(av.day, av);
