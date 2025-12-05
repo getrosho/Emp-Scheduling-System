@@ -7,12 +7,12 @@ import { AvailabilityEditor } from "@/components/employees/availability-editor";
 import { DayOfWeek } from "@/generated/prisma/enums";
 import Link from "next/link";
 import { z } from "zod";
-import { editEmployeeFormSchema } from "@/lib/validations/employees";
+import { availabilityFormSchema } from "@/lib/validations/employees";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-type AvailabilityFormData = z.infer<typeof editEmployeeFormSchema>;
+type AvailabilityFormData = z.infer<typeof availabilityFormSchema>;
 
 const dayOrder: DayOfWeek[] = [
   DayOfWeek.MON,
@@ -52,7 +52,7 @@ export default function AvailabilityPage() {
     formState: { isDirty },
     reset,
   } = useForm<AvailabilityFormData>({
-    resolver: zodResolver(editEmployeeFormSchema),
+    resolver: zodResolver(availabilityFormSchema),
     defaultValues: {
       availability: dayOrder.map((day) => {
         const av = availabilityMap.get(day);

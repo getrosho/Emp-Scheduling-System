@@ -98,6 +98,48 @@ export const employeeAvailabilitySchema = z.object({
   ),
 });
 
+// Availability Form Schema (for UI forms - uses start/end instead of startTime/endTime)
+export const availabilityFormSchema = z.object({
+  availability: z
+    .array(
+      z.object({
+        day: z.nativeEnum(DayOfWeek),
+        start: z.string().regex(timeRegex, "Start time must be in HH:mm format").nullable(),
+        end: z.string().regex(timeRegex, "End time must be in HH:mm format").nullable(),
+      })
+    )
+    .length(7, "Must have exactly 7 availability slots (one for each day)")
+    .refine(
+      (slots) => {
+        // If start or end exists, both must exist
+        return slots.every((slot) => {
+          const hasStart = slot.start !== null;
+          const hasEnd = slot.end !== null;
+          return (!hasStart && !hasEnd) || (hasStart && hasEnd);
+        });
+      },
+      {
+        message: "If start time is set, end time must also be set, and vice versa",
+      }
+    )
+    .refine(
+      (slots) => {
+        // End must be after start
+        return slots.every((slot) => {
+          if (!slot.start || !slot.end) return true;
+          const [startHours, startMinutes] = slot.start.split(":").map(Number);
+          const [endHours, endMinutes] = slot.end.split(":").map(Number);
+          const startTotal = startHours * 60 + startMinutes;
+          const endTotal = endHours * 60 + endMinutes;
+          return endTotal > startTotal;
+        });
+      },
+      {
+        message: "End time must be after start time",
+      }
+    ),
+});
+
 // Single Availability Slot Schema
 export const availabilitySlotSchema = z.object({
   day: z.nativeEnum(DayOfWeek),
