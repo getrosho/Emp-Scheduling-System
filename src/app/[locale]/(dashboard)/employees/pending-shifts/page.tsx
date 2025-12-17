@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import { useTranslations, useLocale } from "next-intl";
-import { CalendarIcon, ClockIcon, TargetIcon, PersonIcon, CheckIcon, ChevronRightIcon, MapPinIcon, FileTextIcon } from "@radix-ui/react-icons";
+import { CalendarIcon, ClockIcon, TargetIcon, PersonIcon, CheckIcon, ChevronRightIcon, FileTextIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 
 export default function PendingShiftsPage() {
@@ -182,7 +182,7 @@ export default function PendingShiftsPage() {
                     {shift.object && (
                       <div className="space-y-2">
                         <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                          <MapPinIcon className="h-4 w-4" />
+                          <TargetIcon className="h-4 w-4" />
                           {t("objectDetails") || "Object Details"}
                         </h4>
                         <div className="pl-6 space-y-1 text-sm text-slate-600">
