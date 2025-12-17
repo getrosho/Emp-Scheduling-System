@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { useShift, useUpdateShift, useDeleteShift } from "@/hooks/use-shifts";
-import { useLocations } from "@/hooks/use-locations";
+import { useObjects } from "@/hooks/use-objects";
 import { useEmployees } from "@/hooks/use-employees";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ export default function ShiftDetailPage() {
   const id = params.id as string;
   const { data, isLoading, isError, error } = useShift(id);
   const { user } = useAuth();
-  const { data: locationsData } = useLocations();
+  const { data: objectsData } = useObjects();
   const { data: employeesData } = useEmployees();
   const updateShift = useUpdateShift();
   const deleteShift = useDeleteShift();
@@ -35,7 +35,7 @@ export default function ShiftDetailPage() {
     date: string;
     startTime: string;
     endTime: string;
-    locationId: string;
+    objectId: string;
     skillsRequired: string[];
     assignedEmployeeIds: string[];
     colorTag: string;
@@ -46,7 +46,7 @@ export default function ShiftDetailPage() {
     date: "",
     startTime: "",
     endTime: "",
-    locationId: "",
+    objectId: "",
     skillsRequired: [],
     assignedEmployeeIds: [],
     colorTag: "#2563eb",
@@ -67,7 +67,7 @@ export default function ShiftDetailPage() {
         date: format(startDate, "yyyy-MM-dd"),
         startTime: format(startDate, "HH:mm"),
         endTime: format(endDate, "HH:mm"),
-        locationId: shift.locationId || "",
+        objectId: shift.objectId || "",
         skillsRequired: shift.skillsRequired || [],
         assignedEmployeeIds: shift.assignedEmployees || [],
         colorTag: shift.colorTag || "#2563eb",
@@ -77,7 +77,7 @@ export default function ShiftDetailPage() {
   }, [data?.shift, isEditing]);
 
   const employees = employeesData?.employees || [];
-  const locations = locationsData?.locations || [];
+  const objects = objectsData?.objects || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +99,7 @@ export default function ShiftDetailPage() {
           date: startDateTime.toISOString(),
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          locationId: formData.locationId || undefined,
+          objectId: formData.objectId || undefined,
           skillsRequired: formData.skillsRequired,
           assignedEmployeeIds: validEmployeeIds,
           colorTag: formData.colorTag,
@@ -173,7 +173,7 @@ export default function ShiftDetailPage() {
   const shift = data.shift;
   const startDate = new Date(shift.startTime);
   const endDate = new Date(shift.endTime);
-  const location = locations.find((loc) => loc.id === shift.locationId);
+  const object = objects.find((obj) => obj.id === shift.objectId);
 
   return (
     <section className="space-y-6">
@@ -323,19 +323,19 @@ export default function ShiftDetailPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="locationId" className="block text-sm font-medium text-slate-700">
-                    Location
-                  </label>
-                  <select
-                    id="locationId"
-                    value={formData.locationId}
-                    onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+                    <label htmlFor="objectId" className="block text-sm font-medium text-slate-700">
+                      Object
+                    </label>
+                    <select
+                      id="objectId"
+                      value={formData.objectId}
+                      onChange={(e) => setFormData({ ...formData, objectId: e.target.value })}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   >
-                    <option value="">No location</option>
-                    {locations.map((loc) => (
-                      <option key={loc.id} value={loc.id}>
-                        {loc.label}
+                    <option value="">No object</option>
+                    {objects.map((obj) => (
+                      <option key={obj.id} value={obj.id}>
+                        {obj.label}
                       </option>
                     ))}
                   </select>
@@ -457,10 +457,10 @@ export default function ShiftDetailPage() {
                   </div>
                 </div>
 
-                {location && (
+                {object && (
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Location</p>
-                    <p className="mt-1 text-slate-900">{location.label}</p>
+                    <p className="text-sm font-medium text-slate-500">Object</p>
+                    <p className="mt-1 text-slate-900">{object.label}</p>
                   </div>
                 )}
 

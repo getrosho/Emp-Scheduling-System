@@ -8,7 +8,7 @@ export type Employee = {
   role: EmployeeRole;
   status: EmployeeStatus;
   subcontractor: boolean;
-  preferredLocations?: Array<{
+  preferredObjects?: Array<{
     id: string;
     label: string;
     name?: string;

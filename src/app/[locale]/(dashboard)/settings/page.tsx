@@ -1,0 +1,46 @@
+"use client";
+
+import { useAuth } from "@/hooks/use-auth";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { useLocale } from "next-intl";
+
+export default function SettingsPage() {
+  const locale = useLocale();
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const { user } = useAuth();
+
+  return (
+    <section className="space-y-6">
+      <div>
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">{t("subtitle")}</p>
+        <h1 className="text-3xl font-semibold text-slate-900">{t("title")}</h1>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">{t("accountSettings")}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              {tCommon("name")}
+            </label>
+            <p className="text-sm text-slate-600">{user?.name || "N/A"}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              {tCommon("role")}
+            </label>
+            <p className="text-sm text-slate-600">{user?.role || "N/A"}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">{t("preferences")}</h2>
+        <p className="text-sm text-slate-600">{t("preferencesDescription")}</p>
+      </div>
+    </section>
+  );
+}
+

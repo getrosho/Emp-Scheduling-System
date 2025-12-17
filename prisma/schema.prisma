@@ -104,9 +104,14 @@ model Availability {
   employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String?
   dayOfWeek  Int?
+  // Date-based availability (for specific dates, not weekly patterns)
+  date       DateTime? // When set, represents availability for a specific date
+  isAvailable Boolean? @default(true) // true = available, false = unavailable, null = no data
 
   @@index([userId, day])
   @@index([employeeId, dayOfWeek])
+  @@index([employeeId, date])
+  @@index([date])
 }
 
 model WorkLocation {
@@ -119,7 +124,7 @@ model WorkLocation {
   postalCode         String?
   notes              String?
   shifts             Shift[]
-  employeesPreferred Employee[] @relation("EmployeePreferredLocations")
+  employeesPreferred Employee[] @relation("EmployeePreferredObjects")
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 }
@@ -132,8 +137,9 @@ model Shift {
   endTime              DateTime
   date                 DateTime
   durationMinutes      Int                       @default(0)
-  locationLabel        String?
+  objectLabel          String?
   skillsRequired       String[]                  @default([])
+  requiredWorkers      Int                       @default(1) // Amount of workers needed for this shift
   createdByUser        User                      @relation("ShiftCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   createdBy            String
   status               ShiftStatus               @default(DRAFT)
@@ -142,8 +148,8 @@ model Shift {
   recurringRule        RecurringRule             @default(NONE)
   recurringTemplate    RecurringShiftTemplate?   @relation(fields: [recurringTemplateId], references: [id], onDelete: SetNull)
   recurringTemplateId  String?
-  location             WorkLocation?             @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  locationId           String?
+  object               WorkLocation?             @relation(fields: [objectId], references: [id], onDelete: SetNull)
+  objectId             String?
   assignedEmployees    String[]                  @default([])
   shiftAssignments     ShiftAssignment[]
   subcontractorDemands SubcontractorAssignment[]
@@ -256,7 +262,7 @@ model Employee {
   role               EmployeeRole   @default(EMPLOYEE)
   status             EmployeeStatus @default(ACTIVE)
   subcontractor      Boolean        @default(false)
-  preferredLocations WorkLocation[] @relation("EmployeePreferredLocations")
+  preferredObjects WorkLocation[] @relation("EmployeePreferredObjects")
   availability       Availability[]
   weeklyLimitHours   Int?
   notes              String?

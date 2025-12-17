@@ -213,17 +213,17 @@ export default function EmployeeDetailPage() {
             )}
           </div>
 
-          {/* Preferred Locations */}
-          {employee.preferredLocations && employee.preferredLocations.length > 0 && (
+          {/* Preferred Objects */}
+          {employee.preferredObjects && employee.preferredObjects.length > 0 && (
             <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-slate-900">Preferred Locations</h2>
+              <h2 className="mb-4 text-lg font-semibold text-slate-900">Preferred Objects</h2>
               <div className="flex flex-wrap gap-2">
-                {employee.preferredLocations.map((location) => (
+                {employee.preferredObjects.map((object) => (
                   <span
-                    key={location.id}
+                    key={object.id}
                     className="rounded bg-slate-100 px-3 py-1 text-sm text-slate-700"
                   >
-                    {location.label}
+                    {object.label}
                   </span>
                 ))}
               </div>

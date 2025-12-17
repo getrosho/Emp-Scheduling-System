@@ -22,17 +22,41 @@ export async function GET(req: NextRequest, { params }: Params) {
       throw new AppError("Employee ID is required", 400);
     }
     
-    const employee = await prisma.employee.findUnique({
-      where: { id },
-      include: {
-        preferredLocations: true,
-        availability: {
-          orderBy: {
-            dayOfWeek: "asc",
+    let employee;
+    try {
+      employee = await prisma.employee.findUnique({
+        where: { id },
+        include: {
+          preferredObjects: true,
+          availability: {
+            orderBy: {
+              dayOfWeek: "asc",
+            },
           },
         },
-      },
-    });
+      });
+    } catch (queryErr: any) {
+      // If the error is about missing relation table, try without preferredObjects
+      if (queryErr.message?.includes("_EmployeePreferredObjects") || queryErr.message?.includes("does not exist")) {
+        console.warn("[Employees GET /:id] Relation table missing, retrying without preferredObjects...");
+        employee = await prisma.employee.findUnique({
+          where: { id },
+          include: {
+            availability: {
+              orderBy: {
+                dayOfWeek: "asc",
+              },
+            },
+          },
+        });
+        // Add empty preferredObjects array
+        if (employee) {
+          employee = { ...employee, preferredObjects: [] };
+        }
+      } else {
+        throw queryErr;
+      }
+    }
 
     if (!employee) {
       throw new AppError("Employee not found", 404);
@@ -82,7 +106,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const employee = await prisma.employee.findUnique({
       where: { id },
       include: {
-        preferredLocations: true,
+        preferredObjects: true,
       },
     });
 
@@ -148,21 +172,21 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (payload.subcontractor !== undefined) updateData.subcontractor = payload.subcontractor;
     if (payload.weeklyLimitHours !== undefined) updateData.weeklyLimitHours = payload.weeklyLimitHours;
 
-    // Handle preferred locations
-    if (payload.preferredLocationIds !== undefined) {
-      // Validate locations exist
-      if (payload.preferredLocationIds.length > 0) {
-        const locations = await prisma.workLocation.findMany({
-          where: { id: { in: payload.preferredLocationIds } },
+    // Handle preferred objects
+    if (payload.preferredObjectIds !== undefined) {
+      // Validate objects exist
+      if (payload.preferredObjectIds.length > 0) {
+        const objects = await prisma.workLocation.findMany({
+          where: { id: { in: payload.preferredObjectIds } },
         });
 
-        if (locations.length !== payload.preferredLocationIds.length) {
-          throw new AppError("One or more preferred locations not found", 404);
+        if (objects.length !== payload.preferredObjectIds.length) {
+          throw new AppError("One or more preferred objects not found", 404);
         }
       }
 
-      updateData.preferredLocations = {
-        set: payload.preferredLocationIds.map((id) => ({ id })),
+      updateData.preferredObjects = {
+        set: payload.preferredObjectIds.map((id) => ({ id })),
       };
     }
 
@@ -170,7 +194,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       where: { id },
       data: updateData,
       include: {
-        preferredLocations: true,
+        preferredObjects: true,
         availability: true,
       },
     });
@@ -227,7 +251,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const finalEmployee = await prisma.employee.findUnique({
       where: { id },
       include: {
-        preferredLocations: true,
+        preferredObjects: true,
         availability: {
           orderBy: {
             dayOfWeek: "asc",
@@ -263,14 +287,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
 /**
  * DELETE /api/employees/:id
  * Permanently delete employee from database
- * RBAC: Admin only
+ * RBAC: Admin and Manager
  * 
  * Note: This is a HARD DELETE. The employee will be completely removed.
  * To temporarily disable an employee, use PUT to set status to INACTIVE instead.
  */
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    const actor = await requireAuth(req, [Role.ADMIN]);
+    const actor = await requireAuth(req, [Role.ADMIN, Role.MANAGER]);
     const { id } = await params;
     
     if (!id) {
@@ -280,7 +304,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     const employee = await prisma.employee.findUnique({
       where: { id },
       include: {
-        preferredLocations: true,
+        preferredObjects: true,
         availability: true,
       },
     });
@@ -298,7 +322,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     // Hard delete: permanently remove employee from database
     // Prisma will cascade delete related records (Availability has onDelete: Cascade)
-    // Many-to-many relations (preferredLocations) are automatically handled
+    // Many-to-many relations (preferredObjects) are automatically handled
     await prisma.employee.delete({
       where: { id },
     });

@@ -3,7 +3,7 @@ import { RecurringRule, ShiftStatus } from "@/generated/prisma/enums";
 
 export const shiftFilterSchema = z.object({
   status: z.nativeEnum(ShiftStatus).optional(),
-  locationId: z.string().cuid().optional(),
+  objectId: z.string().cuid().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 });
@@ -14,9 +14,10 @@ export const createShiftSchema = z.object({
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
   date: z.coerce.date(),
-  locationLabel: z.string().optional(),
-  locationId: z.string().cuid().optional(),
+  objectLabel: z.string().optional(),
+  objectId: z.string().cuid().optional(),
   skillsRequired: z.array(z.string()).optional(),
+  requiredWorkers: z.number().int().min(1).default(1), // Amount of workers needed
   assignedEmployeeIds: z
     .array(z.string())
     .default([])

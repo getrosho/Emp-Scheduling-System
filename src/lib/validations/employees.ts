@@ -7,7 +7,7 @@ const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const employeeFilterSchema = z.object({
   role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
   status: z.nativeEnum(EmployeeStatus).optional(),
-  locationId: z.string().cuid().optional(),
+  objectId: z.string().cuid().optional(),
   subcontractor: z.coerce.boolean().optional(),
   q: z.string().optional(),
   page: z.coerce.number().int().positive().optional(),
@@ -22,7 +22,7 @@ export const createEmployeeSchema = z.object({
   role: z.nativeEnum(EmployeeRole).default(EmployeeRole.EMPLOYEE),
   status: z.nativeEnum(EmployeeStatus).default(EmployeeStatus.ACTIVE),
   subcontractor: z.boolean().default(false),
-  preferredLocationIds: z.array(z.string().cuid()).default([]),
+  preferredObjectIds: z.array(z.string().cuid()).default([]),
   weeklyLimitHours: z.number().int().min(0).max(168).optional(), // Max 168 hours (7 days)
   availability: z
     .array(
@@ -80,9 +80,9 @@ export const assignRoleSchema = z.object({
   role: z.nativeEnum(EmployeeRole),
 });
 
-// Assign Preferred Locations Schema
-export const assignPreferredLocationsSchema = z.object({
-  locationIds: z.array(z.string().cuid()).min(0),
+// Assign Preferred Objects Schema
+export const assignPreferredObjectsSchema = z.object({
+  objectIds: z.array(z.string().cuid()).min(0),
 });
 
 // Availability Management Schema

@@ -48,6 +48,14 @@ async function request<T>(method: HttpMethod, url: string, data?: unknown, confi
       ...config,
     });
 
+    // Check if response data exists and has the expected structure
+    if (!response.data || typeof response.data !== "object") {
+      throw { 
+        message: "Invalid API response format",
+        status: response.status,
+      };
+    }
+
     if (!response.data.success) {
       const error = response.data.error ?? { message: "Unknown API error" };
       // Ensure we throw a plain object, not an Error instance
@@ -60,40 +68,127 @@ async function request<T>(method: HttpMethod, url: string, data?: unknown, confi
     return response.data.data as T;
   } catch (error: any) {
     // Handle axios errors (non-2xx responses)
-    if (error.response?.data) {
-      const apiResponse = error.response.data as ApiResponse<T>;
+    if (error.response) {
+      const status = error.response?.status;
+      const apiResponse = error.response.data;
       
       // Log full error for debugging
       if (process.env.NODE_ENV === "development") {
         console.error("API Error Response:", {
-          status: error.response?.status,
+          status,
           data: apiResponse,
-          fullError: error,
+          dataType: typeof apiResponse,
+          dataKeys: apiResponse && typeof apiResponse === "object" ? Object.keys(apiResponse) : "N/A",
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers,
+          responseHeaders: error.response?.headers,
         });
       }
       
-      // Check if response has error object
+      // FIRST: Check if response matches expected ApiResponse format (even if it looks empty)
+      // This handles cases where the response has the structure but might appear empty
       if (apiResponse && typeof apiResponse === "object") {
-        if (apiResponse.error) {
-          const errorMessage = apiResponse.error.message || "Unknown API error";
-          const errorDetails = apiResponse.error.details;
-          const errorObj: { message: string; details?: unknown } = { message: errorMessage };
-          if (errorDetails !== undefined) {
-            errorObj.details = errorDetails;
+        // Check if it's in the expected ApiResponse format
+        if ("success" in apiResponse || "error" in apiResponse || "data" in apiResponse) {
+          const typedResponse = apiResponse as ApiResponse<T>;
+          
+          // If response has an error, throw it with proper structure (this handles 404s properly)
+          if (typedResponse.error) {
+            const errorMessage = typedResponse.error.message || "Unknown API error";
+            const errorDetails = typedResponse.error.details;
+            const errorObj: { message: string; details?: unknown; status?: number } = { 
+              message: errorMessage,
+              status: status,
+            };
+            if (errorDetails !== undefined) {
+              errorObj.details = errorDetails;
+            }
+            throw errorObj;
           }
-          throw errorObj;
-        }
-        if (apiResponse.success === false) {
-          // When success is false, error should exist, but TypeScript doesn't know this
-          const errorMessage = (apiResponse as { error?: { message?: string } }).error?.message || "Unknown API error";
-          throw { message: errorMessage };
+          
+          // If success is false, there should be an error
+          if (typedResponse.success === false) {
+            const errorMessage = typedResponse.error?.message || "Unknown API error";
+            throw { 
+              message: errorMessage,
+              status: status,
+              details: typedResponse.error?.details,
+            };
+          }
+          
+          // If we have a valid response structure with data, return it
+          return typedResponse.data as T;
         }
       }
       
-      // If response data exists but doesn't match expected format
-      if (Object.keys(apiResponse || {}).length === 0) {
+      // SECOND: Handle empty or undefined response data (only if not in expected format)
+      if (!apiResponse || (typeof apiResponse === "object" && Object.keys(apiResponse).length === 0)) {
+        const statusMessage = status === 401 
+          ? "Unauthorized. Please check your authentication."
+          : status === 403
+          ? "Forbidden. You don't have permission to access this resource."
+          : status === 404
+          ? "Resource not found."
+          : status === 500
+          ? "Internal server error. Check server logs for details. This may indicate a database schema issue - try running: npx prisma migrate dev"
+          : status === 503
+          ? "Service unavailable. Database connection may be down."
+          : `Request failed with status ${status || "unknown"}`;
+        
+        // Log additional context for debugging
+        if (process.env.NODE_ENV === "development") {
+          console.error("[API Client] Empty response details:", {
+            url: error.config?.url,
+            method: error.config?.method,
+            status,
+            responseHeaders: error.response?.headers,
+            apiResponse,
+          });
+        }
+        
         throw { 
-          message: `Request failed with status ${error.response?.status || 500}. Please try again.` 
+          message: statusMessage,
+          status,
+          url: error.config?.url,
+        };
+      }
+      
+      // THIRD: Response doesn't match expected format - might be a different error format
+      if (apiResponse && typeof apiResponse === "object") {
+        const errorMessage = (apiResponse as any)?.message || 
+                            (apiResponse as any)?.error?.message || 
+                            `Request failed with status ${status || 500}`;
+        throw { 
+          message: errorMessage,
+          status: status,
+        };
+      } else {
+        // Response data is not an object
+        throw { 
+          message: `Request failed with status ${status || 500}. Unexpected response format.`,
+          status: status,
+        };
+      }
+    }
+    
+    // Handle cases where error.response exists but error.response.data is undefined/null/empty
+    if (error.response) {
+      const status = error.response.status;
+      if (!error.response.data || (typeof error.response.data === "object" && Object.keys(error.response.data).length === 0)) {
+        const statusMessage = status === 401 
+          ? "Unauthorized. Please check your authentication."
+          : status === 403
+          ? "Forbidden. You don't have permission to access this resource."
+          : status === 404
+          ? "Resource not found."
+          : status === 500
+          ? "Internal server error."
+          : `Request failed with status ${status || "unknown"}`;
+        
+        throw { 
+          message: statusMessage,
+          status,
         };
       }
     }

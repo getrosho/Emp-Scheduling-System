@@ -7,10 +7,14 @@ import { SidebarNav } from "./sidebar-nav";
 import { Topbar } from "./topbar";
 import { cn } from "@/lib/utils";
 import { HamburgerMenuIcon } from "@radix-ui/react-icons";
+import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 
 export function DashboardShell({ children }: PropsWithChildren) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const locale = useLocale();
+  const t = useTranslations("sidebar");
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden">
@@ -22,7 +26,7 @@ export function DashboardShell({ children }: PropsWithChildren) {
         )}
       >
         <div className={cn("flex items-center justify-between py-4", collapsed ? "px-2 justify-center" : "px-4")}>
-          <Link href="/dashboard" className={cn("text-lg font-semibold tracking-tight", collapsed && "text-sm")}>
+          <Link href={`/${locale}/dashboard`} className={cn("text-lg font-semibold tracking-tight", collapsed && "text-sm")}>
             {collapsed ? "SF" : "ShiftFlow"}
           </Link>
           {!collapsed && (
@@ -50,9 +54,9 @@ export function DashboardShell({ children }: PropsWithChildren) {
             variant="ghost"
             className={cn("w-full text-slate-300", collapsed && "px-0 justify-center")}
             onClick={() => setCollapsed((prev) => !prev)}
-            title={collapsed ? "Expand" : "Collapse"}
+            title={collapsed ? t("expand") : t("collapse")}
           >
-            {collapsed ? "E" : "Collapse"}
+            {collapsed ? "E" : t("collapse")}
           </Button>
         </div>
       </aside>

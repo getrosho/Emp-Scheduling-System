@@ -34,9 +34,9 @@ export default function EditEmployeePage() {
   const isAdmin = userRole === Role.ADMIN;
   const isManager = userRole === Role.MANAGER;
   
-  // TODO: Get manager's allowed location IDs from user profile or session
-  // For now, managers can see all locations (this should be restricted)
-  const allowedLocationIds = isManager ? undefined : undefined;
+  // TODO: Get manager's allowed object IDs from user profile or session
+  // For now, managers can see all objects (this should be restricted)
+  const allowedObjectIds = isManager ? undefined : undefined;
 
   const handleSubmit: SubmitHandler<z.input<typeof editEmployeeFormSchema>> = async (formData) => {
     try {
@@ -53,7 +53,7 @@ export default function EditEmployeePage() {
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone || undefined,
-        preferredLocationIds: formData.preferredLocationIds,
+        preferredObjectIds: formData.preferredObjectIds,
         weeklyLimitHours: formData.weeklyLimitHours,
         notes: formData.notes || undefined,
         availability: availability, // Always include all 7 days
@@ -136,7 +136,7 @@ export default function EditEmployeePage() {
       <EmployeeEditForm
         employee={employee}
         userRole={userRole}
-        allowedLocationIds={allowedLocationIds}
+        allowedObjectIds={allowedObjectIds}
         onSubmit={handleSubmit}
         isSubmitting={updateEmployee.isPending}
         errors={updateEmployee.error}

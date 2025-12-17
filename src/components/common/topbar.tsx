@@ -8,6 +8,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslations, useLocale } from "next-intl";
+import { LanguageSwitcher } from "./language-switcher";
 
 type TopbarProps = {
   onToggleSidebar?: () => void;
@@ -17,6 +19,9 @@ type TopbarProps = {
 export function Topbar({ onToggleSidebar, notificationsCount = 0 }: TopbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
+  const locale = useLocale();
+  const t = useTranslations("topbar");
+  const tCommon = useTranslations("common");
   const today = format(new Date(), "EEEE, MMM d");
 
   return (
@@ -26,14 +31,15 @@ export function Topbar({ onToggleSidebar, notificationsCount = 0 }: TopbarProps)
           ☰
         </Button>
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Today</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">{t("today")}</p>
           <p className="text-lg font-semibold text-slate-900">{today}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <Link href="/notifications" className="relative">
-          <Button variant="ghost" size="icon" aria-label="Notifications">
+        <LanguageSwitcher />
+        <Link href={`/${locale}/notifications`} className="relative">
+          <Button variant="ghost" size="icon" aria-label={tCommon("notifications")}>
             <BellIcon className="h-5 w-5" />
           </Button>
           {notificationsCount > 0 && (
@@ -53,8 +59,8 @@ export function Topbar({ onToggleSidebar, notificationsCount = 0 }: TopbarProps)
           >
             <Avatar name={user?.name || "User"} />
             <div className="hidden text-left text-sm leading-tight sm:block">
-              <p className="font-semibold text-slate-900">{user?.name || "User"}</p>
-              <p className="text-xs text-slate-500">{user?.role || "Guest"}</p>
+              <p className="font-semibold text-slate-900">{user?.name || t("user")}</p>
+              <p className="text-xs text-slate-500">{user?.role || t("guest")}</p>
             </div>
             <ChevronDownIcon className="h-4 w-4 text-slate-500" />
           </Button>
@@ -65,20 +71,20 @@ export function Topbar({ onToggleSidebar, notificationsCount = 0 }: TopbarProps)
             )}
           >
             <Link
-              href="/settings"
+              href={`/${locale}/settings`}
               className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
             >
-              Settings
+              {tCommon("settings")}
             </Link>
             <Link
-              href="/profile"
+              href={`/${locale}/profile`}
               className="block rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
             >
-              Profile
+              {tCommon("profile")}
             </Link>
             <form action="/api/auth/logout" method="post">
               <Button type="submit" variant="ghost" className="w-full justify-start text-slate-600">
-                Logout
+                {tCommon("logout")}
               </Button>
             </form>
           </div>

@@ -7,7 +7,7 @@ import { EmployeeRole, EmployeeStatus, DayOfWeek } from "@/generated/prisma/enum
 import { Role } from "@/generated/prisma/enums";
 import { RoleSelector } from "./role-selector";
 import { StatusToggle } from "./status-toggle";
-import { LocationSelector } from "./location-selector";
+import { ObjectSelector } from "./object-selector";
 import { WeeklyLimitInput } from "./weekly-limit-input";
 import { AvailabilityEditor } from "./availability-editor";
 import { SubcontractorToggle } from "./subcontractor-toggle";
@@ -18,7 +18,7 @@ import { z } from "zod";
 type EmployeeEditFormProps = {
   employee: any;
   userRole: Role;
-  allowedLocationIds?: string[]; // For managers
+  allowedObjectIds?: string[]; // For managers
   onSubmit: SubmitHandler<z.input<typeof editEmployeeFormSchema>>;
   isSubmitting: boolean;
   errors?: any;
@@ -37,7 +37,7 @@ const dayOrder: DayOfWeek[] = [
 export function EmployeeEditForm({
   employee,
   userRole,
-  allowedLocationIds,
+  allowedObjectIds,
   onSubmit,
   isSubmitting,
   errors: externalErrors,
@@ -47,7 +47,7 @@ export function EmployeeEditForm({
   const canEditRole = isAdmin;
   const canEditStatus = isAdmin;
   const canEditSubcontractor = isAdmin;
-  const canEditLocations = isAdmin || isManager;
+  const canEditObjects = isAdmin || isManager;
 
   // Map availability from API format to form format
   const availabilityMap = new Map<number, NonNullable<typeof employee.availability>[number]>();
@@ -77,7 +77,7 @@ export function EmployeeEditForm({
       status: employee.status || EmployeeStatus.ACTIVE,
       notes: employee.notes || "",
       role: employee.role || EmployeeRole.EMPLOYEE,
-      preferredLocationIds: employee.preferredLocations?.map((loc: any) => loc.id) || [],
+      preferredObjectIds: employee.preferredObjects?.map((obj: any) => obj.id) || [],
       weeklyLimitHours: employee.weeklyLimitHours ?? undefined,
       subcontractor: employee.subcontractor || false,
       availability: dayOrder.map((day, index) => {
@@ -158,13 +158,13 @@ export function EmployeeEditForm({
         </div>
       ) : null}
 
-      {/* Card 3: Locations */}
+      {/* Card 3: Objects */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Location Assignment</h2>
-        <LocationSelector
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Object Assignment</h2>
+        <ObjectSelector
           control={control}
-          allowedLocationIds={canEditLocations ? (isAdmin ? undefined : allowedLocationIds) : []}
-          disabled={!canEditLocations}
+          allowedObjectIds={canEditObjects ? (isAdmin ? undefined : allowedObjectIds) : []}
+          disabled={!canEditObjects}
           errors={formErrors}
         />
       </div>

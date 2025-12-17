@@ -19,20 +19,91 @@ export async function GET(req: NextRequest, { params }: Params) {
       throw new AppError("Shift ID is required", 400);
     }
 
-    const shift = await prisma.shift.findUnique({
-      where: { id },
-      include: {
-        shiftAssignments: true,
-        subcontractorDemands: true,
-        location: true,
-      },
-    });
+    let shift;
+    try {
+      shift = await prisma.shift.findUnique({
+        where: { id },
+        include: {
+          shiftAssignments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          subcontractorDemands: {
+            include: {
+              subcontractor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          object: true,
+        },
+      });
+    } catch (queryError: any) {
+      // If the error is about missing tables/columns, try with minimal includes
+      console.error("[Shifts GET /:id] Query error:", queryError);
+      console.error("[Shifts GET /:id] Error message:", queryError?.message);
+      console.error("[Shifts GET /:id] Error code:", queryError?.code);
+      
+      if (queryError?.message?.includes("does not exist") || 
+          queryError?.message?.includes("not available") ||
+          queryError?.code === "P2021" || // Table does not exist
+          queryError?.code === "P2025") { // Record not found
+        console.warn("[Shifts GET /:id] Database schema may be incomplete. Retrying with minimal includes...");
+        try {
+          shift = await prisma.shift.findUnique({
+            where: { id },
+          });
+          // Add empty arrays/objects for missing relations
+          if (shift) {
+            shift = {
+              ...shift,
+              shiftAssignments: [],
+              subcontractorDemands: [],
+              object: null,
+            } as any;
+          }
+          console.log("[Shifts GET /:id] Query successful with minimal includes");
+        } catch (retryError: any) {
+          console.error("[Shifts GET /:id] Retry also failed:", retryError);
+          // Don't throw, let it fall through to check if shift exists
+        }
+      } else {
+        // For other errors, log but continue to check if shift exists
+        console.error("[Shifts GET /:id] Unexpected error:", queryError);
+      }
+    }
+    
     if (!shift) {
       throw new AppError("Shift not found", 404);
     }
     return jsonResponse({ shift });
   } catch (error) {
-    return handleRouteError(error);
+    console.error("[Shifts GET /:id] Outer catch error:", error);
+    // Ensure we always return a proper response
+    try {
+      return handleRouteError(error);
+    } catch (handlerError) {
+      console.error("[Shifts GET /:id] Error handler failed:", handlerError);
+      // Last resort: return a basic error response
+      return jsonResponse(null, {
+        status: 500,
+        error: new AppError(
+          error instanceof Error ? error.message : "Failed to fetch shift. Please check database connection.",
+          500
+        ),
+      });
+    }
   }
 }
 

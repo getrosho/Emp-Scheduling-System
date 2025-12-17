@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const [
       totalEmployees,
       activeShifts,
-      totalLocations,
+      totalObjects,
       pendingInternalAssignments,
       pendingSubcontractors,
       weeklyAssignments,
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
     const result = {
       totalEmployees,
       activeShifts,
-      totalLocations,
+      totalObjects,
       pendingRequests,
       weeklyHours: Math.round(weeklyHours * 10) / 10,
       overtimeAlerts,

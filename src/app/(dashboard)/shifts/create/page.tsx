@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useCreateShift } from "@/hooks/use-shifts";
-import { useLocations } from "@/hooks/use-locations";
+import { useObjects } from "@/hooks/use-objects";
 import { useEmployees } from "@/hooks/use-employees";
 import { Button } from "@/components/ui/button";
 import { RecurringRule } from "@/generated/prisma/enums";
@@ -13,7 +13,7 @@ import { toRecurringRule, enumToString } from "@/lib/form-utils";
 export default function CreateShiftPage() {
   const router = useRouter();
   const createShift = useCreateShift();
-  const { data: locationsData } = useLocations();
+  const { data: objectsData } = useObjects();
   const { data: employeesData } = useEmployees();
   const [formData, setFormData] = useState<{
     title: string;
@@ -21,8 +21,8 @@ export default function CreateShiftPage() {
     date: string;
     startTime: string;
     endTime: string;
-    locationId: string;
-    locationLabel: string;
+    objectId: string;
+    objectLabel: string;
     skillsRequired: string[];
     assignedEmployeeIds: string[];
     isRecurring: boolean;
@@ -34,8 +34,8 @@ export default function CreateShiftPage() {
     date: new Date().toISOString().split("T")[0],
     startTime: "09:00",
     endTime: "17:00",
-    locationId: "",
-    locationLabel: "",
+    objectId: "",
+    objectLabel: "",
     skillsRequired: [],
     assignedEmployeeIds: [],
     isRecurring: false,
@@ -90,8 +90,8 @@ export default function CreateShiftPage() {
         date: startDateTime.toISOString(),
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
-        locationId: formData.locationId || undefined,
-        locationLabel: formData.locationLabel || undefined,
+        objectId: formData.objectId || undefined,
+        objectLabel: formData.objectLabel || undefined,
         skillsRequired: formData.skillsRequired,
         assignedEmployeeIds: validEmployeeIds,
         isRecurring: formData.isRecurring,
@@ -236,33 +236,33 @@ export default function CreateShiftPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="locationId" className="block text-sm font-medium text-slate-700">
-              Location
+            <label htmlFor="objectId" className="block text-sm font-medium text-slate-700">
+              Object
             </label>
             <select
-              id="locationId"
-              value={formData.locationId}
-              onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+              id="objectId"
+              value={formData.objectId}
+              onChange={(e) => setFormData({ ...formData, objectId: e.target.value })}
               className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
-              <option value="">Select a location</option>
-              {locationsData?.locations?.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.label}
+              <option value="">Select an object</option>
+              {objectsData?.objects?.map((object) => (
+                <option key={object.id} value={object.id}>
+                  {object.label}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label htmlFor="locationLabel" className="block text-sm font-medium text-slate-700">
-              Or Enter Location Label
+            <label htmlFor="objectLabel" className="block text-sm font-medium text-slate-700">
+              Or Enter Object Label
             </label>
             <input
               type="text"
-              id="locationLabel"
-              value={formData.locationLabel}
-              onChange={(e) => setFormData({ ...formData, locationLabel: e.target.value })}
+              id="objectLabel"
+              value={formData.objectLabel}
+              onChange={(e) => setFormData({ ...formData, objectLabel: e.target.value })}
               placeholder="e.g., Main Office"
               className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />

@@ -13,29 +13,46 @@ import {
   TargetIcon,
 } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
-
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
-  { label: "Employees", href: "/employees", icon: PersonIcon },
-  { label: "Locations", href: "/locations", icon: TargetIcon },
-  { label: "Shifts", href: "/shifts", icon: CalendarIcon },
-  { label: "Recurring", href: "/recurring", icon: MixIcon },
-  { label: "Planner", href: "/planner", icon: LayersIcon },
-  { label: "Subcontractors", href: "/subcontractors", icon: RocketIcon },
-  { label: "Notifications", href: "/notifications", icon: BellIcon },
-];
+import { useTranslations, useLocale } from "next-intl";
 
 type SidebarNavProps = {
   collapsed?: boolean;
   onNavigate?: () => void;
 };
 
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  type?: "separator";
+};
+
 export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
+  const t = useTranslations("sidebar");
+  const locale = useLocale();
+
+  const NAV_ITEMS: (NavItem | { type: "separator" })[] = [
+    { label: t("monthOverview"), href: `/${locale}/dashboard`, icon: DashboardIcon },
+    { label: t("employees"), href: `/${locale}/employees`, icon: PersonIcon },
+    { label: t("subcontractors"), href: `/${locale}/subcontractors`, icon: RocketIcon },
+    { type: "separator" },
+    { label: t("managerView"), href: `/${locale}/manager/view`, icon: PersonIcon },
+    { label: t("objects"), href: `/${locale}/objects`, icon: TargetIcon },
+  ];
 
   return (
     <nav className={cn("mt-6 space-y-1", collapsed ? "px-1" : "px-2")}>
-      {NAV_ITEMS.map((item) => {
+      {NAV_ITEMS.map((item, index) => {
+        if (item.type === "separator") {
+          return (
+            <div
+              key={`separator-${index}`}
+              className={cn("my-2 border-t border-slate-700", collapsed ? "mx-1" : "mx-3")}
+            />
+          );
+        }
+        
         const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
         const Icon = item.icon;
         

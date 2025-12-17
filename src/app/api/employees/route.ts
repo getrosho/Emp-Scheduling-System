@@ -45,9 +45,9 @@ export async function GET(req: NextRequest) {
         filterParams.status = statusParam;
       }
       
-      const locationIdParam = searchParams.get("locationId");
-      if (locationIdParam && locationIdParam !== "") {
-        filterParams.locationId = locationIdParam;
+      const objectIdParam = searchParams.get("objectId");
+      if (objectIdParam && objectIdParam !== "") {
+        filterParams.objectId = objectIdParam;
       }
       
       const subcontractorParam = searchParams.get("subcontractor");
@@ -123,13 +123,13 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    // Manager scope: filter by preferred locations
-    // Note: This assumes managers have access to certain locations
-    // If location-based access control needs to be implemented, add a manager-location relation
-    if (actor.role === Role.MANAGER && filters.locationId) {
-      where.preferredLocations = {
+    // Manager scope: filter by preferred objects
+    // Note: This assumes managers have access to certain objects
+    // If object-based access control needs to be implemented, add a manager-object relation
+    if (actor.role === Role.MANAGER && filters.objectId) {
+      where.preferredObjects = {
         some: {
-          id: filters.locationId,
+          id: filters.objectId,
         },
       };
     }
@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
           prisma.employee.findMany({
             where,
             include: {
-              preferredLocations: {
+              preferredObjects: {
                 select: {
                   id: true,
                   label: true,
@@ -184,7 +184,47 @@ export async function GET(req: NextRequest) {
         console.error("[Employees GET] Prisma query failed:", queryErr);
         console.error("[Employees GET] Error code:", queryErr.code);
         console.error("[Employees GET] Error meta:", JSON.stringify(queryErr.meta, null, 2));
-        throw queryErr;
+        
+        // If the error is about missing relation table, try without preferredObjects
+        if (queryErr.message?.includes("_EmployeePreferredObjects") || queryErr.message?.includes("does not exist")) {
+          console.warn("[Employees GET] Relation table missing, retrying without preferredObjects...");
+          try {
+            [employees, total] = await Promise.all([
+              prisma.employee.findMany({
+                where,
+                include: {
+                  availability: {
+                    select: {
+                      id: true,
+                      day: true,
+                      dayOfWeek: true,
+                      startTime: true,
+                      endTime: true,
+                      timezone: true,
+                    },
+                  },
+                },
+                orderBy: {
+                  fullName: "asc",
+                },
+                skip,
+                take: limit,
+              }),
+              prisma.employee.count({ where }),
+            ]);
+            // Add empty preferredObjects array to each employee
+            employees = employees.map((emp: any) => ({
+              ...emp,
+              preferredObjects: [],
+            }));
+            console.log("[Employees GET] Query successful (without preferredObjects), found", employees.length, "employees");
+          } catch (retryErr: any) {
+            console.error("[Employees GET] Retry also failed:", retryErr);
+            throw queryErr; // Throw original error
+          }
+        } else {
+          throw queryErr;
+        }
       }
       
       // Sort availability client-side to avoid Prisma orderBy issues
@@ -305,21 +345,21 @@ export async function POST(req: NextRequest) {
       throw new AppError("Forbidden: Managers cannot assign ADMIN or MANAGER roles", 403);
     }
 
-    // Validate preferred locations exist
-    if (payload.preferredLocationIds && payload.preferredLocationIds.length > 0) {
-      const locations = await prisma.workLocation.findMany({
-        where: { id: { in: payload.preferredLocationIds } },
+    // Validate preferred objects exist
+    if (payload.preferredObjectIds && payload.preferredObjectIds.length > 0) {
+      const objects = await prisma.workLocation.findMany({
+        where: { id: { in: payload.preferredObjectIds } },
       });
 
-      if (locations.length !== payload.preferredLocationIds.length) {
-        throw new AppError("One or more preferred locations not found", 404);
+      if (objects.length !== payload.preferredObjectIds.length) {
+        throw new AppError("One or more preferred objects not found", 404);
       }
 
-      // Manager scope: verify they have access to these locations
-      // Note: This is a placeholder - implement proper location-based access control
+      // Manager scope: verify they have access to these objects
+      // Note: This is a placeholder - implement proper object-based access control
       if (actor.role === Role.MANAGER) {
-        // For now, allow managers to assign any location
-        // TODO: Implement manager-location relationship check
+        // For now, allow managers to assign any object
+        // TODO: Implement manager-object relationship check
       }
     }
 
@@ -344,9 +384,9 @@ export async function POST(req: NextRequest) {
       role: payload.role,
       subcontractor: payload.subcontractor,
       weeklyLimitHours: payload.weeklyLimitHours,
-      preferredLocations: payload.preferredLocationIds.length > 0
+      preferredObjects: payload.preferredObjectIds.length > 0
         ? {
-            connect: payload.preferredLocationIds.map((id) => ({ id })),
+            connect: payload.preferredObjectIds.map((id) => ({ id })),
           }
         : undefined,
     };
@@ -355,7 +395,7 @@ export async function POST(req: NextRequest) {
     const employee = await prisma.employee.create({
       data: employeeData,
       include: {
-        preferredLocations: true,
+        preferredObjects: true,
         availability: true,
       },
     });
@@ -405,7 +445,7 @@ export async function POST(req: NextRequest) {
     const employeeWithRelations = await prisma.employee.findUnique({
       where: { id: employee.id },
       include: {
-        preferredLocations: true,
+        preferredObjects: true,
           availability: {
             orderBy: {
               dayOfWeek: "asc",

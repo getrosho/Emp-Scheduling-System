@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useEmployees } from "@/hooks/use-employees";
 import { useDeleteEmployee } from "@/hooks/use-employees";
-import { useLocations } from "@/hooks/use-locations";
+import { useObjects } from "@/hooks/use-objects";
 import { Button } from "@/components/ui/button";
 import { PersonIcon, Pencil1Icon, TrashIcon, CalendarIcon, ClockIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
@@ -16,7 +16,7 @@ export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<EmployeeRole | "">("");
   const [statusFilter, setStatusFilter] = useState<EmployeeStatus | "">("");
-  const [locationFilter, setLocationFilter] = useState<string>("");
+  const [objectFilter, setObjectFilter] = useState<string>("");
   const [page, setPage] = useState(1);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -24,12 +24,12 @@ export default function EmployeesPage() {
     q: searchQuery || undefined,
     role: roleFilter === "" ? undefined : (roleFilter || undefined),
     status: statusFilter === "" ? undefined : (statusFilter || undefined),
-    locationId: locationFilter || undefined,
+    objectId: objectFilter || undefined,
     page,
     limit: 20,
   });
 
-  const { data: locationsData } = useLocations();
+  const { data: objectsData } = useObjects();
   const deleteEmployee = useDeleteEmployee();
 
   const handleDelete = async (id: string) => {
@@ -123,24 +123,24 @@ export default function EmployeesPage() {
             </select>
           </div>
 
-          {/* Location Filter */}
+          {/* Object Filter */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-slate-700 mb-1">
-              Location
+            <label htmlFor="object" className="block text-sm font-medium text-slate-700 mb-1">
+              Object
             </label>
             <select
-              id="location"
-              value={locationFilter}
+              id="object"
+              value={objectFilter}
               onChange={(e) => {
-                setLocationFilter(e.target.value);
+                setObjectFilter(e.target.value);
                 setPage(1);
               }}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
-              <option value="">All Locations</option>
-              {locationsData?.locations?.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.label}
+              <option value="">All Objects</option>
+              {objectsData?.objects?.map((obj) => (
+                <option key={obj.id} value={obj.id}>
+                  {obj.label}
                 </option>
               ))}
             </select>
@@ -271,8 +271,8 @@ export default function EmployeesPage() {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-600" style={{ minWidth: '100px' }}>
-                        {employee.preferredLocations && employee.preferredLocations.length > 0 ? (
-                          <span className="text-slate-900">{employee.preferredLocations.length}</span>
+                        {employee.preferredObjects && employee.preferredObjects.length > 0 ? (
+                          <span className="text-slate-900">{employee.preferredObjects.length}</span>
                         ) : (
                           <span className="text-slate-400">0</span>
                         )}

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateEmployee } from "@/hooks/use-employees";
-import { useLocations } from "@/hooks/use-locations";
+import { useObjects } from "@/hooks/use-objects";
 import { Button } from "@/components/ui/button";
 import { createEmployeeSchema } from "@/lib/validations/employees";
 import { EmployeeRole, EmployeeStatus, DayOfWeek } from "@/generated/prisma/enums";
@@ -24,7 +24,7 @@ const dayOrder: DayOfWeek[] = [
 export default function CreateEmployeePage() {
   const router = useRouter();
   const createEmployee = useCreateEmployee();
-  const { data: locationsData } = useLocations();
+  const { data: objectsData } = useObjects();
 
   const {
     register,
@@ -42,7 +42,7 @@ export default function CreateEmployeePage() {
       status: EmployeeStatus.ACTIVE,
       notes: "",
       role: EmployeeRole.EMPLOYEE,
-      preferredLocationIds: [],
+      preferredObjectIds: [],
       weeklyLimitHours: undefined,
       subcontractor: false,
       availability: dayOrder.map((day) => ({
@@ -53,17 +53,17 @@ export default function CreateEmployeePage() {
     },
   });
 
-  const selectedLocations = watch("preferredLocationIds") || [];
+  const selectedObjects = watch("preferredObjectIds") || [];
 
-  const toggleLocation = (locationId: string) => {
-    const current = selectedLocations || [];
-    if (current.includes(locationId)) {
+  const toggleObject = (objectId: string) => {
+    const current = selectedObjects || [];
+    if (current.includes(objectId)) {
       setValue(
-        "preferredLocationIds",
-        current.filter((id) => id !== locationId),
+        "preferredObjectIds",
+        current.filter((id) => id !== objectId),
       );
     } else {
-      setValue("preferredLocationIds", [...current, locationId]);
+      setValue("preferredObjectIds", [...current, objectId]);
     }
   };
 
@@ -76,7 +76,7 @@ export default function CreateEmployeePage() {
         status: data.status,
         notes: data.notes || undefined,
         role: data.role,
-        preferredLocationIds: data.preferredLocationIds,
+        preferredObjectIds: data.preferredObjectIds,
         weeklyLimitHours: data.weeklyLimitHours,
         subcontractor: data.subcontractor,
         availability: data.availability,
@@ -215,33 +215,33 @@ export default function CreateEmployeePage() {
           </div>
         </div>
 
-        {/* Preferred Locations */}
+        {/* Preferred Objects */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Preferred Locations
+            Preferred Objects
           </label>
-          {locationsData?.locations && locationsData.locations.length > 0 ? (
+          {objectsData?.objects && objectsData.objects.length > 0 ? (
             <div className="mt-2 space-y-2 max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-3">
-              {locationsData.locations.map((location) => (
+              {objectsData.objects.map((object) => (
                 <label
-                  key={location.id}
+                  key={object.id}
                   className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded"
                 >
                   <input
                     type="checkbox"
-                    checked={selectedLocations?.includes(location.id) || false}
-                    onChange={() => toggleLocation(location.id)}
+                    checked={selectedObjects?.includes(object.id) || false}
+                    onChange={() => toggleObject(object.id)}
                     className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-slate-700">{location.label}</span>
+                  <span className="text-sm text-slate-700">{object.label}</span>
                 </label>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No locations available</p>
+            <p className="text-sm text-slate-500">No objects available</p>
           )}
-          {errors.preferredLocationIds && (
-            <p className="mt-1 text-xs text-rose-600">{errors.preferredLocationIds.message}</p>
+          {errors.preferredObjectIds && (
+            <p className="mt-1 text-xs text-rose-600">{errors.preferredObjectIds.message}</p>
           )}
         </div>
 

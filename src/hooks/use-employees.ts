@@ -10,7 +10,7 @@ export type CreateEmployeeInput = {
   role?: EmployeeRole;
   status?: EmployeeStatus;
   subcontractor?: boolean;
-  preferredLocationIds?: string[];
+  preferredObjectIds?: string[];
   weeklyLimitHours?: number;
   availability?: Array<{
     day: string;
@@ -25,7 +25,7 @@ export type UpdateEmployeeInput = Partial<CreateEmployeeInput>;
 export type EmployeeFilters = {
   role?: EmployeeRole | "ALL" | "";
   status?: EmployeeStatus;
-  locationId?: string;
+  objectId?: string;
   subcontractor?: boolean;
   q?: string;
   page?: number;
@@ -52,8 +52,8 @@ export function useEmployees(filters?: EmployeeFilters) {
         params.append("status", filters.status);
       }
       
-      if (filters?.locationId && filters.locationId !== "") {
-        params.append("locationId", filters.locationId);
+      if (filters?.objectId && filters.objectId !== "") {
+        params.append("objectId", filters.objectId);
       }
       
       if (filters?.subcontractor !== undefined) {

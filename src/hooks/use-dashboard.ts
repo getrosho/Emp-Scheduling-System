@@ -4,7 +4,7 @@ import { apiClient } from "@/lib/api";
 export type DashboardMetrics = {
   totalEmployees: number;
   activeShifts: number;
-  totalLocations: number;
+  totalObjects: number;
   pendingRequests: number;
   weeklyHours: number;
   overtimeAlerts: number;

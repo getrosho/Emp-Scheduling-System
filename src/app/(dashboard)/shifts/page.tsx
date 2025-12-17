@@ -116,7 +116,7 @@ export default function ShiftsPage() {
                       {format(new Date(shift.startTime), "MMM d, yyyy")} •{" "}
                       {format(new Date(shift.startTime), "h:mm a")} - {format(new Date(shift.endTime), "h:mm a")}
                     </p>
-                    {shift.locationLabel && <p className="text-xs text-slate-400">{shift.locationLabel}</p>}
+                    {shift.objectLabel && <p className="text-xs text-slate-400">{shift.objectLabel}</p>}
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">

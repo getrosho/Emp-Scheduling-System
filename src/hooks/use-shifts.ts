@@ -9,23 +9,24 @@ export type Shift = {
   endTime: string;
   date: string;
   durationMinutes: number;
-  locationLabel?: string;
-  locationId?: string;
+  objectLabel?: string;
+  objectId?: string;
   skillsRequired: string[];
+  requiredWorkers?: number; // Amount of workers needed
   status: string;
   colorTag?: string;
   assignedEmployees: string[];
   shiftAssignments?: unknown[];
-  location?: unknown;
+  object?: unknown;
 };
 
-export function useShifts(filters?: { status?: string; locationId?: string; from?: string; to?: string }) {
+export function useShifts(filters?: { status?: string; objectId?: string; from?: string; to?: string }) {
   return useQuery({
     queryKey: ["shifts", filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters?.status) params.append("status", filters.status);
-      if (filters?.locationId) params.append("locationId", filters.locationId);
+      if (filters?.objectId) params.append("objectId", filters.objectId);
       if (filters?.from) params.append("from", filters.from);
       if (filters?.to) params.append("to", filters.to);
       const data = await apiClient.get<{ shifts: Shift[] }>(
@@ -42,9 +43,10 @@ export type CreateShiftInput = {
   startTime: string;
   endTime: string;
   date: string;
-  locationLabel?: string;
-  locationId?: string;
+  objectLabel?: string;
+  objectId?: string;
   skillsRequired?: string[];
+  requiredWorkers?: number; // Amount of workers needed
   assignedEmployeeIds?: string[];
   isRecurring?: boolean;
   recurringRule?: string;
@@ -81,8 +83,8 @@ export type UpdateShiftInput = {
   startTime?: string;
   endTime?: string;
   date?: string;
-  locationLabel?: string;
-  locationId?: string;
+  objectLabel?: string;
+  objectId?: string;
   skillsRequired?: string[];
   assignedEmployeeIds?: string[];
   colorTag?: string;
