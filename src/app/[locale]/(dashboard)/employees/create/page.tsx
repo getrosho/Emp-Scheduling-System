@@ -21,6 +21,11 @@ const createStaffFormSchema = createEmployeeSchema.extend({
   hourlyRate: z.number().min(0).optional(),
   internalId: z.string().optional(),
   startDate: z.string().optional(), // ISO date string
+  // Make role and status required (not optional) for the form
+  role: z.nativeEnum(EmployeeRole),
+  status: z.nativeEnum(EmployeeStatus),
+  subcontractor: z.boolean(),
+  preferredObjectIds: z.array(z.string().cuid()),
 }).omit({ fullName: true, availability: true }); // Remove fullName (will be computed) and availability (employees set their own)
 
 type CreateStaffFormData = z.infer<typeof createStaffFormSchema> & {
