@@ -3,9 +3,10 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// Force dynamic rendering for all locale routes
+// This prevents next-intl from trying to statically generate pages
+// that use runtime-only hooks like useSearchParams()
+export const dynamic = "force-dynamic";
 
 export default async function LocaleLayout({
   children,

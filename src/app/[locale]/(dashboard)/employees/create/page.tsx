@@ -40,17 +40,8 @@ export default function CreateStaffPage() {
   const router = useRouter();
   const locale = useLocale();
   const searchParams = useSearchParams();
-  
-  // Wrap translations in try-catch for build
-  let t: any, tCommon: any;
-  try {
-    t = useTranslations("employees");
-    tCommon = useTranslations("common");
-  } catch (error) {
-    console.error("Translation error:", error);
-    t = (key: string) => key;
-    tCommon = (key: string) => key;
-  }
+  const t = useTranslations("employees");
+  const tCommon = useTranslations("common");
   const createEmployee = useCreateEmployee();
   const { data: objectsData } = useObjects();
 
