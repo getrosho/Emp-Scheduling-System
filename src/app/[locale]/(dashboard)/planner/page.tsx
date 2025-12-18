@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering - prevent static generation
+export const dynamic = "force-dynamic";
+
 import { useState, useMemo, useEffect } from "react";
 import {
   DndContext,

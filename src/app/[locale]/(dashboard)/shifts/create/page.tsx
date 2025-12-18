@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering - prevent static generation
+export const dynamic = "force-dynamic";
+
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateShift } from "@/hooks/use-shifts";

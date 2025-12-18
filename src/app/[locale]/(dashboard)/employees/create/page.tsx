@@ -1,7 +1,7 @@
 "use client";
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
+// Force dynamic rendering - prevent static generation
+export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
