@@ -22,7 +22,7 @@ import { useAssignShift } from "@/hooks/use-shift-confirmation";
 import { useEmployeesAvailabilityForDate } from "@/hooks/use-employee-availability-for-date";
 import { useAuth } from "@/hooks/use-auth";
 import { useObjects } from "@/hooks/use-objects";
-import { AssignmentStatus, Role } from "@/generated/prisma/enums";
+import { AssignmentStatus, Role, EmployeeStatus } from "@/generated/prisma/enums";
 import { CalendarIcon, PersonIcon, RocketIcon } from "@radix-ui/react-icons";
 import { format, startOfDay, parse } from "date-fns";
 import { de, enUS } from "date-fns/locale";
@@ -268,6 +268,9 @@ export default function PlannerPage() {
           role: user.role,
           email: `${user.id}@manager.local`,
           subcontractor: false,
+          status: EmployeeStatus.ACTIVE,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         regularEmployees.push(managerEmployee);
       }
@@ -479,7 +482,7 @@ export default function PlannerPage() {
               <div className="space-y-4">
                 {Array.from(shiftsByObject.entries()).map(([objectId, { object, shifts }]) => (
                   <div key={objectId} className="space-y-2">
-                    {shifts.map((shift) => (
+                    {shifts.map((shift: any) => (
                       <div
                         key={shift.id}
                         className="rounded-lg border border-slate-200 bg-white p-3"

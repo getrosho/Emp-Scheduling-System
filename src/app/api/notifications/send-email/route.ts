@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
             date: shift.date,
             startTime: shift.startTime,
             endTime: shift.endTime,
-            objectLabel: shift.object?.label || shift.objectLabel,
+            objectLabel: (shift as any).object?.label || shift.objectLabel,
           });
         }
       });
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
             date: shift.date,
             startTime: shift.startTime,
             endTime: shift.endTime,
-            objectLabel: shift.object?.label || shift.objectLabel,
+            objectLabel: (shift as any).object?.label || shift.objectLabel,
           });
         }
       });

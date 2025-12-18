@@ -184,7 +184,7 @@ export default function ShiftsPage() {
             <h3 className="text-lg font-semibold text-slate-900 mb-2">{t("deleteShift")}</h3>
             <p className="text-sm text-slate-600 mb-4">
               {(() => {
-                const shiftToDelete = shifts?.find((s: any) => s.id === deleteConfirmId);
+                const shiftToDelete = data?.shifts?.find((s: any) => s.id === deleteConfirmId);
                 return shiftToDelete 
                   ? t("deleteConfirmMessage", { title: shiftToDelete.title })
                   : t("deleteConfirmMessage", { title: "this shift" });

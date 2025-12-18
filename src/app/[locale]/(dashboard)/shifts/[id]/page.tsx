@@ -77,8 +77,8 @@ export default function ShiftDetailPage() {
         objectId: shift.objectId || "",
         objectLabel: shift.objectLabel || "",
         workerAmountNeeded: (shift as any).requiredWorkers || 1,
-        isRecurring: shift.isRecurring || false,
-        recurringRule: shift.recurringRule || RecurringRule.NONE,
+        isRecurring: (shift as any).isRecurring || false,
+        recurringRule: (shift as any).recurringRule || RecurringRule.NONE,
         status: shift.status ? toShiftStatus(shift.status, ShiftStatus.DRAFT) : ShiftStatus.DRAFT,
       });
     }
@@ -93,8 +93,8 @@ export default function ShiftDetailPage() {
     const confirmed: Array<{ id: string; userId?: string; subcontractorId?: string; name: string; email?: string; status: string }> = [];
     
     // Process employee assignments
-    if (data?.shift?.shiftAssignments) {
-      const assignments = data.shift.shiftAssignments as Array<{
+    if ((data?.shift as any)?.shiftAssignments) {
+      const assignments = ((data?.shift as any).shiftAssignments) as Array<{
         id: string;
         userId: string;
         status: string;
@@ -115,8 +115,8 @@ export default function ShiftDetailPage() {
     }
     
     // Process subcontractor assignments
-    if (data?.shift?.subcontractorDemands) {
-      const subcontractors = data.shift.subcontractorDemands as Array<{
+    if ((data?.shift as any)?.subcontractorDemands) {
+      const subcontractors = ((data?.shift as any).subcontractorDemands) as Array<{
         id: string;
         subcontractorId: string;
         status: string;
@@ -137,7 +137,7 @@ export default function ShiftDetailPage() {
     }
     
     return { pending, confirmed };
-  }, [data?.shift?.shiftAssignments, data?.shift?.subcontractorDemands, employees]);
+  }, [(data?.shift as any)?.shiftAssignments, (data?.shift as any)?.subcontractorDemands, employees]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,13 +157,6 @@ export default function ShiftDetailPage() {
           endTime: endDateTime.toISOString(),
         objectId: formData.objectId || undefined,
         objectLabel: formData.objectLabel || undefined,
-        requiredWorkers: formData.workerAmountNeeded,
-        skillsRequired: [], // Not shown in form, but required by API
-        assignedEmployeeIds: [], // Don't update assignments here - they're managed in planner
-        isRecurring: formData.isRecurring,
-        recurringRule: formData.recurringRule,
-        colorTag: "#2563eb", // Default color, not shown in form
-        status: formData.status,
         },
       });
       setIsEditing(false);
@@ -216,7 +209,7 @@ export default function ShiftDetailPage() {
   const endDate = new Date(shift.endTime);
   const object = objects.find((obj) => obj.id === shift.objectId);
   const requiredWorkers = (shift as any).requiredWorkers || 1;
-  const assignedCount = (shift.shiftAssignments || []).length;
+  const assignedCount = ((shift as any).shiftAssignments || []).length;
 
   return (
     <section className="space-y-6">
@@ -514,7 +507,7 @@ export default function ShiftDetailPage() {
                   <div className="space-y-2">
                     {assignmentStatusGroups.pending.map((assignment) => {
                       const employee = employees.find((emp) => emp.id === assignment.userId);
-                      const name = assignment.user?.name || employee?.fullName || "Unknown";
+                      const name = assignment.name || employee?.fullName || "Unknown";
                       return (
                         <div
                           key={assignment.id}
@@ -523,8 +516,8 @@ export default function ShiftDetailPage() {
                           <PersonIcon className="h-5 w-5 text-orange-600" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-slate-900">{name}</p>
-                            {assignment.user?.email && (
-                              <p className="text-xs text-slate-500">{assignment.user.email}</p>
+                            {assignment.email && (
+                              <p className="text-xs text-slate-500">{assignment.email}</p>
                             )}
                           </div>
                           <span className="rounded-full bg-orange-200 px-3 py-1 text-xs font-medium text-orange-800">
@@ -548,7 +541,7 @@ export default function ShiftDetailPage() {
                   <div className="space-y-2">
                     {assignmentStatusGroups.confirmed.map((assignment) => {
                       const employee = employees.find((emp) => emp.id === assignment.userId);
-                      const name = assignment.user?.name || employee?.fullName || "Unknown";
+                      const name = assignment.name || employee?.fullName || "Unknown";
                       return (
                         <div
                           key={assignment.id}
@@ -557,8 +550,8 @@ export default function ShiftDetailPage() {
                           <CheckIcon className="h-5 w-5 text-green-600" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-slate-900">{name}</p>
-                            {assignment.user?.email && (
-                              <p className="text-xs text-slate-500">{assignment.user.email}</p>
+                            {assignment.email && (
+                              <p className="text-xs text-slate-500">{assignment.email}</p>
                             )}
                           </div>
                           <span className="rounded-full bg-green-200 px-3 py-1 text-xs font-medium text-green-800">

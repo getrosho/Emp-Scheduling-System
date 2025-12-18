@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -26,18 +29,28 @@ const createStaffFormSchema = createEmployeeSchema.extend({
   status: z.nativeEnum(EmployeeStatus),
   subcontractor: z.boolean(),
   preferredObjectIds: z.array(z.string().cuid()),
+  // Add staffType to schema
+  staffType: z.enum(["employee", "subcontractor"]),
 }).omit({ fullName: true, availability: true }); // Remove fullName (will be computed) and availability (employees set their own)
 
-type CreateStaffFormData = z.infer<typeof createStaffFormSchema> & {
-  staffType: "employee" | "subcontractor"; // Role selector
-};
+// Infer type directly from schema (no manual extension)
+export type CreateStaffFormData = z.infer<typeof createStaffFormSchema>;
 
 export default function CreateStaffPage() {
   const router = useRouter();
   const locale = useLocale();
   const searchParams = useSearchParams();
-  const t = useTranslations("employees");
-  const tCommon = useTranslations("common");
+  
+  // Wrap translations in try-catch for build
+  let t: any, tCommon: any;
+  try {
+    t = useTranslations("employees");
+    tCommon = useTranslations("common");
+  } catch (error) {
+    console.error("Translation error:", error);
+    t = (key: string) => key;
+    tCommon = (key: string) => key;
+  }
   const createEmployee = useCreateEmployee();
   const { data: objectsData } = useObjects();
 
@@ -69,14 +82,15 @@ export default function CreateStaffPage() {
       hourlyRate: undefined,
       internalId: "",
       startDate: "",
-      staffType: initialStaffType,
+      staffType: "employee", // Default to employee
     },
   });
 
-  // Update subcontractor flag when staff type changes
+  // Update subcontractor flag and staffType when staff type changes
   const handleStaffTypeChange = (type: "employee" | "subcontractor") => {
     setStaffType(type);
     setValue("subcontractor", type === "subcontractor");
+    setValue("staffType", type);
   };
 
   const selectedObjects = watch("preferredObjectIds") || [];
@@ -145,7 +159,7 @@ export default function CreateStaffPage() {
           <p className="text-sm">
             {createEmployee.error && typeof createEmployee.error === "object" && "message" in createEmployee.error
               ? (createEmployee.error as any).message
-              : t("failedToCreate")}
+              : "Failed to create staff"}
           </p>
         </div>
       )}
@@ -160,7 +174,7 @@ export default function CreateStaffPage() {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
-                name="staffType"
+                {...register("staffType")}
                 value="employee"
                 checked={staffType === "employee"}
                 onChange={() => handleStaffTypeChange("employee")}
@@ -171,7 +185,7 @@ export default function CreateStaffPage() {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
-                name="staffType"
+                {...register("staffType")}
                 value="subcontractor"
                 checked={staffType === "subcontractor"}
                 onChange={() => handleStaffTypeChange("subcontractor")}

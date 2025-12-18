@@ -109,11 +109,11 @@ async function request<T>(method: HttpMethod, url: string, data?: unknown, confi
           
           // If success is false, there should be an error
           if (typedResponse.success === false) {
-            const errorMessage = typedResponse.error?.message || "Unknown API error";
+            const errorMessage = (typedResponse as any).error?.message || "Unknown API error";
             throw { 
               message: errorMessage,
               status: status,
-              details: typedResponse.error?.details,
+              details: (typedResponse as any).error?.details,
             };
           }
           

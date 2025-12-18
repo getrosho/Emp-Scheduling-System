@@ -229,7 +229,7 @@ export async function GET(req: NextRequest) {
       
       // Sort availability client-side to avoid Prisma orderBy issues
       const employeesWithSortedAvailability = employees.map(emp => {
-        const sortedAvailability = emp.availability?.sort((a, b) => {
+        const sortedAvailability = emp.availability?.sort((a: any, b: any) => {
           const dayOrder: Record<string, number> = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0 };
           const aOrder = a.dayOfWeek ?? dayOrder[a.day as string] ?? 999;
           const bOrder = b.dayOfWeek ?? dayOrder[b.day as string] ?? 999;
