@@ -90,7 +90,7 @@ export default function SubcontractorsPage() {
               {t("availabilityVisualizationLabel") || "Availability Visualization"}
             </button>
           </div>
-          <Link href={`/${locale}/employees/create?subcontractor=true`}>
+          <Link href="/employees/create?type=subcontractor">
             <Button>
               <RocketIcon className="mr-2 h-4 w-4" />
               {t("addNewSubcontractor") || "Add New Subcontractor"}
@@ -232,7 +232,7 @@ export default function SubcontractorsPage() {
                               <td colSpan={6} className="px-6 py-12 text-center">
                                 <RocketIcon className="mx-auto h-12 w-12 text-slate-400" />
                                 <p className="mt-4 text-slate-600">{t("noSubcontractors")}</p>
-                                <Link href={`/${locale}/employees/create?subcontractor=true`}>
+                                <Link href="/employees/create?type=subcontractor">
                                   <Button className="mt-4" variant="outline">
                                     {t("createFirstSubcontractor")}
                                   </Button>

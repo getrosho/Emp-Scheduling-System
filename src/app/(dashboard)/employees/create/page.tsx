@@ -1,6 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+// Force dynamic rendering - prevent static generation
+// This page is outside [locale] routing to avoid next-intl prerender issues
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateEmployee } from "@/hooks/use-employees";
@@ -9,22 +15,55 @@ import { Button } from "@/components/ui/button";
 import { createEmployeeSchema } from "@/lib/validations/employees";
 import { EmployeeRole, EmployeeStatus, DayOfWeek } from "@/generated/prisma/enums";
 import { z } from "zod";
+import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 
+// Extended schema for form (includes firstName, lastName, password)
+const createStaffFormSchema = createEmployeeSchema.extend({
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
+  temporaryPassword: z.string().min(6, "Password must be at least 6 characters").optional(),
+  hourlyRate: z.number().min(0).optional(),
+  internalId: z.string().optional(),
+  startDate: z.string().optional(), // ISO date string
+  // Make role and status required (not optional) for the form
+  role: z.nativeEnum(EmployeeRole),
+  status: z.nativeEnum(EmployeeStatus),
+  subcontractor: z.boolean(),
+  preferredObjectIds: z.array(z.string().cuid()),
+  // Add staffType to schema
+  staffType: z.enum(["employee", "subcontractor"]),
+}).omit({ fullName: true, availability: true }); // Remove fullName (will be computed) and availability (employees set their own)
 
-const dayOrder: DayOfWeek[] = [
-  DayOfWeek.MON,
-  DayOfWeek.TUE,
-  DayOfWeek.WED,
-  DayOfWeek.THU,
-  DayOfWeek.FRI,
-  DayOfWeek.SAT,
-  DayOfWeek.SUN,
-];
+// Infer type directly from schema (no manual extension)
+export type CreateStaffFormData = z.infer<typeof createStaffFormSchema>;
 
-export default function CreateEmployeePage() {
+export default function CreateStaffPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Use next-intl hooks with error handling for prerender
+  let locale: string;
+  let t: any;
+  let tCommon: any;
+  
+  try {
+    locale = useLocale();
+    t = useTranslations("employees");
+    tCommon = useTranslations("common");
+  } catch (error) {
+    // Fallback during prerender - will be replaced at runtime
+    locale = "de";
+    t = (key: string) => key;
+    tCommon = (key: string) => key;
+  }
   const createEmployee = useCreateEmployee();
   const { data: objectsData } = useObjects();
+
+  // Get initial staff type from query params or default to employee
+  const initialStaffType = (searchParams.get("type") === "subcontractor" ? "subcontractor" : "employee") as "employee" | "subcontractor";
+
+  const [staffType, setStaffType] = useState<"employee" | "subcontractor">(initialStaffType);
 
   const {
     register,
@@ -32,11 +71,11 @@ export default function CreateEmployeePage() {
     formState: { errors },
     setValue,
     watch,
-    control,
-  } = useForm<z.input<typeof createEmployeeSchema>>({
-    resolver: zodResolver(createEmployeeSchema),
+  } = useForm<CreateStaffFormData>({
+    resolver: zodResolver(createStaffFormSchema),
     defaultValues: {
-      fullName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
       status: EmployeeStatus.ACTIVE,
@@ -44,14 +83,21 @@ export default function CreateEmployeePage() {
       role: EmployeeRole.EMPLOYEE,
       preferredObjectIds: [],
       weeklyLimitHours: undefined,
-      subcontractor: false,
-      availability: dayOrder.map((day) => ({
-        day,
-        start: null,
-        end: null,
-      })),
+      subcontractor: initialStaffType === "subcontractor",
+      temporaryPassword: "",
+      hourlyRate: undefined,
+      internalId: "",
+      startDate: "",
+      staffType: "employee", // Default to employee
     },
   });
+
+  // Update subcontractor flag and staffType when staff type changes
+  const handleStaffTypeChange = (type: "employee" | "subcontractor") => {
+    setStaffType(type);
+    setValue("subcontractor", type === "subcontractor");
+    setValue("staffType", type);
+  };
 
   const selectedObjects = watch("preferredObjectIds") || [];
 
@@ -67,10 +113,15 @@ export default function CreateEmployeePage() {
     }
   };
 
-  const onSubmit: SubmitHandler<z.input<typeof createEmployeeSchema>> = async (data) => {
+  const onSubmit: SubmitHandler<CreateStaffFormData> = async (data) => {
     try {
+      const fullName = `${data.firstName} ${data.lastName}`.trim();
+      
+      // Create empty availability array (employees set their own availability later)
+      const dayOrder = [DayOfWeek.MON, DayOfWeek.TUE, DayOfWeek.WED, DayOfWeek.THU, DayOfWeek.FRI, DayOfWeek.SAT, DayOfWeek.SUN];
+      
       await createEmployee.mutateAsync({
-        fullName: data.fullName,
+        fullName,
         email: data.email,
         phone: data.phone || undefined,
         status: data.status,
@@ -79,146 +130,281 @@ export default function CreateEmployeePage() {
         preferredObjectIds: data.preferredObjectIds,
         weeklyLimitHours: data.weeklyLimitHours,
         subcontractor: data.subcontractor,
-        availability: data.availability,
+        // Provide empty availability array - employees set their own availability later
+        availability: dayOrder.map((day) => ({
+          day,
+          start: null,
+          end: null,
+        })),
+        // Note: temporaryPassword, hourlyRate, internalId, startDate would need API support
       });
-      router.push("/employees");
+      
+      // Redirect based on staff type - use locale-aware routing
+      // Since we're outside [locale], we need to construct the path with locale
+      const basePath = locale === "de" ? "" : `/${locale}`;
+      if (data.subcontractor) {
+        router.push(`${basePath}/subcontractors`);
+      } else {
+        router.push(`${basePath}/employees`);
+      }
     } catch (error: any) {
-      console.error("Failed to create employee:", error);
+      console.error("Failed to create staff:", error);
     }
   };
 
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Team Management</p>
-        <h1 className="text-3xl font-semibold text-slate-900">Add Employee</h1>
+        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">{t("subtitle")}</p>
+        <h1 className="text-3xl font-semibold text-slate-900">{t("addNewStaff") || "Add New Staff"}</h1>
       </div>
 
       {/* Error Alert */}
       {createEmployee.isError && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">
-          <p className="font-medium">Error</p>
+          <p className="font-medium">{tCommon("error")}</p>
           <p className="text-sm">
             {createEmployee.error && typeof createEmployee.error === "object" && "message" in createEmployee.error
               ? (createEmployee.error as any).message
-              : "Failed to create employee. Please try again."}
+              : "Failed to create staff"}
           </p>
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        {/* Full Name */}
+        {/* STEP 1: Role Selector (FIRST) */}
         <div>
-          <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">
-            Full Name *
+          <label className="block text-sm font-medium text-slate-700 mb-3">
+            {t("staffType") || "Staff Type"} *
           </label>
-          <input
-            type="text"
-            id="fullName"
-            {...register("fullName")}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-          />
-          {errors.fullName && (
-            <p className="mt-1 text-xs text-rose-600">{errors.fullName.message}</p>
-          )}
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-              Email *
-            </label>
-            <input
-              type="email"
-              id="email"
-              {...register("email")}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-rose-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
-              Phone
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              {...register("phone")}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-            {errors.phone && (
-              <p className="mt-1 text-xs text-rose-600">{errors.phone.message}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Role */}
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-slate-700">
-              Role *
-            </label>
-            <select
-              id="role"
-              {...register("role")}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            >
-              <option value={EmployeeRole.EMPLOYEE}>Employee</option>
-              <option value={EmployeeRole.MANAGER}>Manager</option>
-              <option value={EmployeeRole.ADMIN}>Admin</option>
-            </select>
-            {errors.role && (
-              <p className="mt-1 text-xs text-rose-600">{errors.role.message}</p>
-            )}
-          </div>
-
-          {/* Status */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-slate-700">
-              Status *
-            </label>
-            <select
-              id="status"
-              {...register("status")}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            >
-              <option value={EmployeeStatus.ACTIVE}>Active</option>
-              <option value={EmployeeStatus.INACTIVE}>Inactive</option>
-            </select>
-            {errors.status && (
-              <p className="mt-1 text-xs text-rose-600">{errors.status.message}</p>
-            )}
-          </div>
-
-          {/* Subcontractor */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Subcontractor
-            </label>
-            <div className="flex items-center gap-2 mt-1">
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="checkbox"
-                id="subcontractor"
-                {...register("subcontractor")}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                type="radio"
+                {...register("staffType")}
+                value="employee"
+                checked={staffType === "employee"}
+                onChange={() => handleStaffTypeChange("employee")}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-slate-700">This employee is a subcontractor</span>
+              <span className="text-sm text-slate-700">{t("employee")}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                {...register("staffType")}
+                value="subcontractor"
+                checked={staffType === "subcontractor"}
+                onChange={() => handleStaffTypeChange("subcontractor")}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-700">{t("subcontractor")}</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Identity Section */}
+        <div className="border-t border-slate-200 pt-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">{t("identity") || "Identity"}</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* First Name */}
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-slate-700">
+                {t("firstName") || "First Name"} *
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                {...register("firstName")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.firstName && (
+                <p className="mt-1 text-xs text-rose-600">{errors.firstName.message}</p>
+              )}
             </div>
-            {errors.subcontractor && (
-              <p className="mt-1 text-xs text-rose-600">{errors.subcontractor.message}</p>
+
+            {/* Last Name */}
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-slate-700">
+                {t("lastName") || "Last Name"} *
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                {...register("lastName")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.lastName && (
+                <p className="mt-1 text-xs text-rose-600">{errors.lastName.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Section */}
+        <div className="border-t border-slate-200 pt-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">{t("contact") || "Contact"}</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+                {t("email")} *
+              </label>
+              <input
+                type="email"
+                id="email"
+                {...register("email")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.email && (
+                <p className="mt-1 text-xs text-rose-600">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
+                {t("phone")}
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                {...register("phone")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.phone && (
+                <p className="mt-1 text-xs text-rose-600">{errors.phone.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Login Details Section */}
+        <div className="border-t border-slate-200 pt-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">{t("loginDetails") || "Login Details"}</h3>
+          <div>
+            <label htmlFor="temporaryPassword" className="block text-sm font-medium text-slate-700">
+              {t("temporaryPassword") || "Temporary Password"} *
+            </label>
+            <input
+              type="password"
+              id="temporaryPassword"
+              {...register("temporaryPassword")}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder={t("temporaryPasswordPlaceholder") || "Minimum 6 characters"}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              {t("temporaryPasswordHint") || "Staff will use this to log in and set their own password"}
+            </p>
+            {errors.temporaryPassword && (
+              <p className="mt-1 text-xs text-rose-600">{errors.temporaryPassword.message}</p>
             )}
+          </div>
+        </div>
+
+        {/* Administrative Details Section */}
+        <div className="border-t border-slate-200 pt-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">{t("administrativeDetails") || "Administrative Details"}</h3>
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Hourly Rate */}
+            <div>
+              <label htmlFor="hourlyRate" className="block text-sm font-medium text-slate-700">
+                {t("hourlyRate") || "Hourly Rate"}
+              </label>
+              <input
+                type="number"
+                id="hourlyRate"
+                min={0}
+                step="0.01"
+                {...register("hourlyRate", { valueAsNumber: true })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.hourlyRate && (
+                <p className="mt-1 text-xs text-rose-600">{errors.hourlyRate.message}</p>
+              )}
+            </div>
+
+            {/* Internal ID */}
+            <div>
+              <label htmlFor="internalId" className="block text-sm font-medium text-slate-700">
+                {t("internalId") || "Internal ID"}
+              </label>
+              <input
+                type="text"
+                id="internalId"
+                {...register("internalId")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.internalId && (
+                <p className="mt-1 text-xs text-rose-600">{errors.internalId.message}</p>
+              )}
+            </div>
+
+            {/* Start Date */}
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-medium text-slate-700">
+                {t("startDate") || "Start Date"}
+              </label>
+              <input
+                type="date"
+                id="startDate"
+                {...register("startDate")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              {errors.startDate && (
+                <p className="mt-1 text-xs text-rose-600">{errors.startDate.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Role & Status Section */}
+        <div className="border-t border-slate-200 pt-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">{tCommon("role") || "Role"} & {tCommon("status") || "Status"}</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Role */}
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
+                {tCommon("role") || "Role"} *
+              </label>
+              <select
+                id="role"
+                {...register("role")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <option value={EmployeeRole.EMPLOYEE}>{t("employee")}</option>
+                <option value={EmployeeRole.MANAGER}>{t("manager")}</option>
+                <option value={EmployeeRole.ADMIN}>{t("admin")}</option>
+              </select>
+              {errors.role && (
+                <p className="mt-1 text-xs text-rose-600">{errors.role.message}</p>
+              )}
+            </div>
+
+            {/* Status */}
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-slate-700">
+                {tCommon("status") || "Status"} *
+              </label>
+              <select
+                id="status"
+                {...register("status")}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <option value={EmployeeStatus.ACTIVE}>{t("active")}</option>
+                <option value={EmployeeStatus.INACTIVE}>{t("inactive")}</option>
+              </select>
+              {errors.status && (
+                <p className="mt-1 text-xs text-rose-600">{errors.status.message}</p>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Preferred Objects */}
-        <div>
+        <div className="border-t border-slate-200 pt-6">
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Preferred Objects
+            {t("preferredObjects")}
           </label>
           {objectsData?.objects && objectsData.objects.length > 0 ? (
             <div className="mt-2 space-y-2 max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-3">
@@ -238,17 +424,17 @@ export default function CreateEmployeePage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No objects available</p>
+            <p className="text-sm text-slate-500">{t("noObjectsAvailable") || "No objects available"}</p>
           )}
           {errors.preferredObjectIds && (
             <p className="mt-1 text-xs text-rose-600">{errors.preferredObjectIds.message}</p>
           )}
         </div>
 
-        {/* Weekly Limit Hours */}
-        <div>
+        {/* Weekly Limit */}
+        <div className="border-t border-slate-200 pt-6">
           <label htmlFor="weeklyLimitHours" className="block text-sm font-medium text-slate-700">
-            Weekly Hour Limit (hours)
+            {t("weeklyLimit")} ({tCommon("hours") || "hours"})
           </label>
           <input
             type="number"
@@ -258,16 +444,16 @@ export default function CreateEmployeePage() {
             {...register("weeklyLimitHours", { valueAsNumber: true })}
             className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
-          <p className="mt-1 text-xs text-slate-500">Maximum 168 hours (7 days). Leave empty for no limit.</p>
+          <p className="mt-1 text-xs text-slate-500">{t("weeklyLimitHint") || "Maximum 168 hours (7 days). Leave empty for no limit."}</p>
           {errors.weeklyLimitHours && (
             <p className="mt-1 text-xs text-rose-600">{errors.weeklyLimitHours.message}</p>
           )}
         </div>
 
         {/* Notes */}
-        <div>
+        <div className="border-t border-slate-200 pt-6">
           <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
-            Notes
+            {t("notes")}
           </label>
           <textarea
             id="notes"
@@ -281,12 +467,12 @@ export default function CreateEmployeePage() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 border-t border-slate-200 pt-6">
           <Button type="submit" disabled={createEmployee.isPending}>
-            {createEmployee.isPending ? "Creating..." : "Create Employee"}
+            {createEmployee.isPending ? tCommon("creating") || "Creating..." : t("createStaff") || "Create Staff"}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            {tCommon("cancel") || "Cancel"}
           </Button>
         </div>
       </form>

@@ -92,7 +92,7 @@ export default function EmployeesPage() {
               {t("availabilityVisualizationLabel") || "Availability Visualization"}
             </button>
           </div>
-          <Link href={`/${locale}/employees/create`}>
+          <Link href="/employees/create">
             <Button>
               <span className="mr-2">+</span>
               {t("addNewStaff") || "Add New Staff"}
@@ -261,7 +261,7 @@ export default function EmployeesPage() {
                               <td colSpan={8} className="px-6 py-12 text-center">
                                 <PersonIcon className="mx-auto h-12 w-12 text-slate-400" />
                                 <p className="mt-4 text-slate-600">{t("noEmployees")}</p>
-                                <Link href={`/${locale}/employees/create`}>
+                                <Link href="/employees/create">
                                   <Button className="mt-4" variant="outline">
                                     {t("createFirstEmployee")}
                                   </Button>
